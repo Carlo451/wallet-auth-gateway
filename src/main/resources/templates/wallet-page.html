@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallet Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f7f7f8;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status.pending { background: #fef3c7; color: #92400e; }
+        .status.verified { background: #d1fae5; color: #065f46; }
+        .status.failed { background: #fee2e2; color: #991b1b; }
+        .status.expired { background: #e5e7eb; color: #374151; }
+
+        #qrcode {
+            margin: 24px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 20px;
+            word-break: break-all;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .actions {
+            margin-top: 24px;
+        }
+
+        a.button {
+            display: inline-block;
+            padding: 12px 18px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .hint {
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Wallet Login</h1>
+    <p>Scanne den QR-Code mit deiner Wallet oder öffne den Link auf demselben Gerät.</p>
+
+    <div id="statusBadge"
+         class="status pending"
+         th:text="${status}">
+        PENDING
+    </div>
+
+    <div id="qrcode"></div>
+
+    <div class="box">
+        <div class="label">Wallet-Link</div>
+        <div id="walletUrl" th:text="${openid4vpUrl}"></div>
+    </div>
+
+    <div class="actions">
+        <a class="button"
+           th:href="${openid4vpUrl}"
+           target="_blank"
+           rel="noopener noreferrer">
+            Wallet öffnen
+        </a>
+    </div>
+
+    <div class="hint">
+        Session-ID: <span th:text="${sessionId}"></span>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const sessionId = [[${sessionId}]];
+    const openid4vpUrl = [[${openid4vpUrl}]];
+    const statusBadge = document.getElementById("statusBadge");
+
+    new QRCode(document.getElementById("qrcode"), {
+        text: openid4vpUrl,
+        width: 260,
+        height: 260
+    });
+
+    async function pollStatus() {
+        try {
+            const response = await fetch(`/api/wallet/login/${sessionId}/status`);
+            if (!response.ok) return;
+
+            const data = await response.json();
+            const status = (data.status || "PENDING").toLowerCase();
+
+            statusBadge.textContent = data.status;
+            statusBadge.className = "status " + status;
+
+            if (data.status === "VERIFIED" || data.status === "FAILED" || data.status === "EXPIRED") {
+                clearInterval(intervalId);
+            }
+        } catch (e) {
+            console.error("Polling failed", e);
+        }
+    }
+
+    const intervalId = setInterval(pollStatus, 2000);
+    pollStatus();
+</script>
+</body>
+</html>
