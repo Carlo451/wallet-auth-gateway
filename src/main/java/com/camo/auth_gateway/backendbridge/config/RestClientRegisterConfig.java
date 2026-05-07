@@ -8,6 +8,7 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfig {
 
     @Bean
+    @Qualifier("registrationRestClient")
     RestClient restClient() {
         return RestClient.builder().build();
     }
