@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: wallet-auth-gateway
+  jpa:
+    hibernate:
+      spring.jpa.hibernate.ddl-auto: update
+    show-sql: false
+  datasource:
+    url: jdbc:postgresql://localhost:5433/auth-gateway
+    username: user
+    password: password123
+
+gateway:
+  app:
+    network:
+      baseurl: http://100.80.20.126:8081
+  bridge:
+    assertion:
+      issuer: http://100.80.20.126:8081
+      gateway.bridge.assertion.registration-assertion-ttl-seconds: 60
+      login-assertion-ttl-seconds: 30
+    signing:
+      key-id: gateway-signing-key-1
+      type: JWT
+    external:
+      api-calls:
+        register-read-timout-seconds: 5
+        login-read-timeout-seconds: 5
