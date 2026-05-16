@@ -10,8 +10,12 @@ public class DcqlCredentialQuery {
 
     private String id;
     private String format;
-    private DcqlCredentialMeta meta;
+    private IDcqlCredentialMeta meta;
     private List<DcqlClaimQuery> claims;
+    @JsonProperty("require_cryptographic_holder_binding")
+    private boolean requireCryptographicHolderBinding;
+    private boolean multiple;
+
 
     @JsonProperty("claim_sets")
     private List<List<String>> claimSets;
@@ -35,11 +39,11 @@ public class DcqlCredentialQuery {
         this.format = format;
     }
 
-    public DcqlCredentialMeta getMeta() {
+    public IDcqlCredentialMeta getMeta() {
         return meta;
     }
 
-    public void setMeta(DcqlCredentialMeta meta) {
+    public void setMeta(IDcqlCredentialMeta meta) {
         this.meta = meta;
     }
 
@@ -57,5 +61,21 @@ public class DcqlCredentialQuery {
 
     public void setClaimSets(List<List<String>> claimSets) {
         this.claimSets = claimSets;
+    }
+
+    public boolean isMultiple() {
+        return multiple;
+    }
+
+    public void setMultiple(boolean multiple) {
+        this.multiple = multiple;
+    }
+
+    public boolean isRequireCryptographicHolderBinding() {
+        return requireCryptographicHolderBinding;
+    }
+
+    public void setRequireCryptographicHolderBinding(boolean requireCryptographicHolderBinding) {
+        this.requireCryptographicHolderBinding = requireCryptographicHolderBinding;
     }
 }

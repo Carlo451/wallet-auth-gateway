@@ -1,14 +1,10 @@
 package com.camo.auth_gateway.backendbridge.service;
 
 import com.camo.auth_gateway.backendbridge.api.LoginAssertionConsumptionApi;
-import com.camo.auth_gateway.backendbridge.api.exception.AssertionNotFoundException;
-import com.camo.auth_gateway.backendbridge.api.exception.WrongAssertionTypeException;
 import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionEntity;
 import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionStatus;
 import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionType;
 import com.camo.auth_gateway.backendbridge.repository.BridgeAssertionRepository;
-import com.camo.auth_gateway.backendbridge.web.dto.ConsumeLoginAssertionRequest;
-import com.camo.auth_gateway.backendbridge.web.dto.ConsumeLoginAssertionResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

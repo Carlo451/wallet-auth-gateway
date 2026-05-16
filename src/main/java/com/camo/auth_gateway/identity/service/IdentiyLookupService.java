@@ -5,9 +5,11 @@ import com.camo.auth_gateway.identity.api.model.PseudonymMappingDto;
 import com.camo.auth_gateway.identity.domain.PseudonymMapping;
 import com.camo.auth_gateway.identity.domain.PseudonymMappingStatus;
 import com.camo.auth_gateway.identity.repository.PseudonymMappingRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public class IdentiyLookupService implements IdentityLookupApi {
 
     private final PseudonymMappingRepository pseudonymMappingRepository;

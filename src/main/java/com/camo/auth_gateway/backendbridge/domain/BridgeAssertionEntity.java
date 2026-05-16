@@ -11,7 +11,6 @@ import lombok.Builder;
 
 import java.time.Instant;
 
-@Builder
 @Entity
 @Table(name = "bridge_assertion")
 public class BridgeAssertionEntity {
@@ -23,8 +22,6 @@ public class BridgeAssertionEntity {
     @Column(name = "client_id", nullable = false, length = 100)
     private String clientId;
 
-    @Column(name = "gateway_session_id", nullable = false, length = 100)
-    private String gatewaySessionId;
 
     @Column(name = "subject", length = 255)
     private String subject;
@@ -48,10 +45,10 @@ public class BridgeAssertionEntity {
 
     protected BridgeAssertionEntity() {
     }
-
+    @Builder
     public BridgeAssertionEntity(String jti,
                                  String clientId,
-                                 String gatewaySessionId,
+
                                  String subject,
                                  BridgeAssertionType assertionType,
                                  BridgeAssertionStatus status,
@@ -59,7 +56,7 @@ public class BridgeAssertionEntity {
                                  Instant expiresAt) {
         this.jti = jti;
         this.clientId = clientId;
-        this.gatewaySessionId = gatewaySessionId;
+
         this.subject = subject;
         this.assertionType = assertionType;
         this.status = status;
@@ -92,9 +89,6 @@ public class BridgeAssertionEntity {
         return clientId;
     }
 
-    public String getGatewaySessionId() {
-        return gatewaySessionId;
-    }
 
     public String getSubject() {
         return subject;

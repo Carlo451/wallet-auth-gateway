@@ -55,6 +55,7 @@ public class IssueLoginAssertionService implements IssueLoginAssertionUseCase {
                 .status(BridgeAssertionStatus.ISSUED)
                 .issuedAt(now)
                 .expiresAt(expiresAt)
+
                 .build();
 
         bridgeAssertionRepository.save(entity);

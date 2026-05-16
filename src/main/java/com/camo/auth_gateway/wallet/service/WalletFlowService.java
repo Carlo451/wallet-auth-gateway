@@ -1,5 +1,6 @@
 package com.camo.auth_gateway.wallet.service;
 
+import com.camo.auth_gateway.common.config.keys.SigningKeys;
 import com.camo.auth_gateway.wallet.domain.WalletFlowState;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
@@ -7,15 +8,23 @@ import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
 import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
 import com.camo.auth_gateway.wallet.dto.authrequestobj.*;
 import com.camo.auth_gateway.wallet.repository.WalletSessionRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,19 +32,24 @@ public class WalletFlowService {
     @Value("${gateway.app.network.baseurl}")
     private String baseUrl;
     private final WalletSessionRepository walletSessionRepository;
+    private final SigningKeys signingKeys;
+    private final ObjectMapper objectMapper;
 
     public StartWalletLoginResponse startLogin(StartWalletLoginRequest request) {
         Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
 
         WalletSession session = WalletSession.createNew(
                 request.redirectUri(),
-                expiresAt
+                expiresAt,
+                request.flowType(),
+                request.clientId()
+
         );
 
         session.markPending();
         walletSessionRepository.save(session);
 
-        String requestUri = "http://localhost:8081/api/wallet/request/" + session.getId();
+        String requestUri = baseUrl+"/api/wallet/request/" + session.getId();
         String openid4vpUrl = "openid4vp://authorize?request_uri_method=post&request_uri=" + requestUri;
 
         return new StartWalletLoginResponse(
@@ -47,7 +61,7 @@ public class WalletFlowService {
         );
     }
 
-    public OpenId4VpAuthorizationRequest getRequestObject(UUID sessionId) {
+    public String getRequestObject(UUID sessionId) {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
 
@@ -55,34 +69,116 @@ public class WalletFlowService {
 
         request.setClientId(baseUrl);
         request.setResponseType("vp_token");
-        request.setResponseMode("direct_post");
+        request.setResponseMode("direct_post.jwt");
         request.setResponseUri(baseUrl+"/api/wallet/callback");
         request.setNonce(session.getNonce());
         request.setState(session.getState());
 
         DcqlClaimQuery givenNameClaim = new DcqlClaimQuery();
-        givenNameClaim.setId("given_name");
-        givenNameClaim.setPath(List.of("given_name"));
+        givenNameClaim.setId("1751");
+        givenNameClaim.setPath(List.of("age_in_years"));
 
-        DcqlClaimQuery birthdateClaim = new DcqlClaimQuery();
-        birthdateClaim.setId("birthdate");
-        birthdateClaim.setPath(List.of("birth_date")); // je nach Credential-Schema evtl. "birthdate"
+        // je nach Credential-Schema evtl. "birthdate"
 
-        DcqlCredentialMeta meta = new DcqlCredentialMeta();
-        meta.setVctValues(List.of("eu.europa.ec.eudi:pid.1"));
+        DcqlCredentialMetaVctValues meta = new DcqlCredentialMetaVctValues();
+        meta.setVctValues(List.of("https://demo.pid-issuer.bundesdruckerei.de/credentials/pid/1.0"));
 
         DcqlCredentialQuery credentialQuery = new DcqlCredentialQuery();
-        credentialQuery.setId("pid");
+        credentialQuery.setId("bdr-demo-hjvua_dc__sd-jwt");
         credentialQuery.setFormat("dc+sd-jwt");
         credentialQuery.setMeta(meta);
-        credentialQuery.setClaims(List.of(givenNameClaim, birthdateClaim));
+        credentialQuery.setMultiple(false);
+        credentialQuery.setRequireCryptographicHolderBinding(false);
+        credentialQuery.setClaims(List.of());
+        credentialQuery.setClaims(List.of(givenNameClaim));
+
+
+        DcqlClaimQuery givenNameClaimMso = new DcqlClaimQuery();
+        givenNameClaimMso.setId("1751");
+        givenNameClaimMso.setPath(List.of("eu.europa.ec.eudi.pid.1","age_in_years"));
+
+        DcqlCredentialMetaDocType metaDoc = new DcqlCredentialMetaDocType();
+        metaDoc.setVctValues("eu.europa.ec.eudi.pid.1");
+
+        DcqlCredentialQuery credentialQueryDoc = new DcqlCredentialQuery();
+        credentialQueryDoc.setId("bdr-demo-hjvua_mso_mdoc");
+        credentialQueryDoc.setFormat("mso_mdoc");
+        credentialQueryDoc.setMeta(metaDoc);
+        credentialQueryDoc.setMultiple(false);
+        credentialQueryDoc.setRequireCryptographicHolderBinding(false);
+        credentialQueryDoc.setClaims(List.of(givenNameClaimMso));
+
+
+        DcqlClaimQuery givenNameClaimCreds = new DcqlClaimQuery();
+        givenNameClaimCreds.setId("1751");
+        givenNameClaimCreds.setPath(List.of("http://schema.org/age_in_years"));
+
+        DcqlCredentialMetaCredsType metaCredTyp = new DcqlCredentialMetaCredsType();
+        metaCredTyp.setVctValues(List.of("https://heidi-entity-ws-prod.ubique.ch/public/v2/schema/bdr-demo-hjvua/1.2.0"));
+
+        DcqlCredentialQuery credentialQueryCred = new DcqlCredentialQuery();
+        credentialQueryCred.setId("bdr-demo-hjvua_bbs-termwise");
+        credentialQueryCred.setFormat("bbs-termwise");
+        credentialQueryCred.setMeta(metaCredTyp);
+        credentialQueryCred.setMultiple(false);
+        credentialQueryCred.setRequireCryptographicHolderBinding(false);
+        credentialQueryCred.setClaims(List.of());
+        credentialQueryCred.setClaims(List.of(givenNameClaimCreds));
+
+
+
+
 
         DcqlQuery dcqlQuery = new DcqlQuery();
-        dcqlQuery.setCredentials(List.of(credentialQuery));
-
+        dcqlQuery.setCredentials(List.of(credentialQuery, credentialQueryDoc,credentialQueryCred));
+        dcqlQuery.setCredentialSets(List.of(Map.of("options",List.of(List.of("bdr-demo-hjvua_dc__sd-jwt"),List.of("bdr-demo-hjvua_dc__sd-jwt"),List.of("bdr-demo-hjvua_bbs-termwise")))));
         request.setDcqlQuery(dcqlQuery);
 
-        return request;
+
+        RSAKey publicJwk = new RSAKey.Builder(signingKeys.getPublicKey())
+                .keyID("bridge-key-1")
+                .build();
+
+        Map<String, Object> jwks =Map.of(
+                "keys", List.of(publicJwk.toJSONObject())
+        );
+        ClientMetadata clientMetadata = new ClientMetadata();
+
+        Instant now = Instant.now();
+
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .issuer(request.getClientId())
+                .issueTime(Date.from(now))
+                .expirationTime(Date.from(now.plusSeconds(300)))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("client_id", request.getClientId())
+                .claim("response_type", request.getResponseType())
+                .claim("response_mode", request.getResponseMode())
+                .claim("nonce", request.getNonce())
+                .claim("state", request.getState())
+                //.claim("redirect_uri", request.getR())
+                .claim("response_uri", request.getResponseUri())
+                .claim("dcql_query", objectMapper.convertValue(dcqlQuery,new TypeReference<Map<String, Object>>() {}))
+                .claim("client_metadata", objectMapper.convertValue(request.getClientMetadata(), new TypeReference<Map<String, Object>>() {}))
+                .claim("jwks", objectMapper.convertValue(jwks,new TypeReference<Map<String, Object>>() {}))
+                .build();
+
+        try {
+            String json = claims.toString();
+            System.out.println(json);
+            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
+                    .type(JOSEObjectType.JWT)
+                    .build();
+            SignedJWT signedJWT = new SignedJWT(header, claims);
+            signedJWT.sign(new RSASSASigner(signingKeys.getPrivateKey()));
+
+            return signedJWT.serialize();
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not sign OID4VP request object", e);
+        }
+
+
+
     }
 
     public String getOpenid4vpUrl(UUID sessionId) {
@@ -90,7 +186,7 @@ public class WalletFlowService {
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
 
         String requestUri = baseUrl+"/api/wallet/request/" + session.getId();
-        return "openid4vp://authorize?request_uri=" + requestUri;
+        return "openid4vp://authorize?request_uri_method=get&request_uri=" + requestUri;
     }
 
     public WalletStatusResponse getStatus(UUID sessionId) {

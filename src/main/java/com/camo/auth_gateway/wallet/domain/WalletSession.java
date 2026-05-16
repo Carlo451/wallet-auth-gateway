@@ -24,9 +24,16 @@ public class WalletSession {
     @Column(name = "nonce", nullable = false, unique = true, length = 100)
     private String nonce;
 
+    @Column(name = "client_id")
+    private String clientId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "flow_state", nullable = false, length = 30)
     private WalletFlowState flowState;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "flow_type", nullable = false, length = 30)
+    private WalletFlowType flowType;
 
     @Column(name = "external_verification_id")
     private String externalVerificationId;
@@ -46,6 +53,9 @@ public class WalletSession {
     @Column(name = "verified_at")
     private Instant verifiedAt;
 
+    @Column(name = "linked_identity_id")
+    private String linkedIdentityId;
+
     protected WalletSession() {
     }
 
@@ -55,7 +65,9 @@ public class WalletSession {
                          WalletFlowState flowState,
                          String frontendRedirectUri,
                          Instant createdAt,
-                         Instant expiresAt) {
+                         Instant expiresAt,
+                         WalletFlowType flowType,
+                         String clientId) {
         this.id = id;
         this.state = state;
         this.nonce = nonce;
@@ -63,9 +75,11 @@ public class WalletSession {
         this.frontendRedirectUri = frontendRedirectUri;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
+        this.flowType = flowType;
+        this.clientId = clientId;
     }
 
-    public static WalletSession createNew(String frontendRedirectUri, Instant expiresAt) {
+    public static WalletSession createNew(String frontendRedirectUri, Instant expiresAt,WalletFlowType flowType, String clientId) {
         Instant now = Instant.now();
 
         return new WalletSession(
@@ -75,7 +89,9 @@ public class WalletSession {
                 WalletFlowState.CREATED,
                 frontendRedirectUri,
                 now,
-                expiresAt
+                expiresAt,
+                flowType,
+                clientId
         );
     }
 
@@ -83,10 +99,12 @@ public class WalletSession {
         this.flowState = WalletFlowState.PENDING;
     }
 
-    public void markVerified(VerifiedClaims verifiedClaims) {
+    public void markVerified(VerifiedClaims verifiedClaims, String linkedIdentityId) {
         this.flowState = WalletFlowState.VERIFIED;
         this.verifiedClaims = verifiedClaims;
         this.verifiedAt = Instant.now();
+        this.linkedIdentityId = linkedIdentityId;
+
     }
 
     public void markFailed() {
@@ -143,5 +161,17 @@ public class WalletSession {
 
     public Instant getVerifiedAt() {
         return verifiedAt;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public WalletFlowType getFlowType() {
+        return flowType;
+    }
+
+    public String getLinkedIdentityId() {
+        return linkedIdentityId;
     }
 }

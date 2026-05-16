@@ -27,7 +27,7 @@ public class WalletLoginController {
     }
 
     @GetMapping("/request/{sessionId}")
-    public OpenId4VpAuthorizationRequest getRequestObject(@PathVariable UUID sessionId) {
+    public String getRequestObject(@PathVariable UUID sessionId) {
         return walletFlowService.getRequestObject(sessionId);
     }
 

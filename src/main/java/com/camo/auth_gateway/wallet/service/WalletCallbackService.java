@@ -1,5 +1,7 @@
 package com.camo.auth_gateway.wallet.service;
 
+import com.camo.auth_gateway.identity.api.IdentityLookupApi;
+import com.camo.auth_gateway.identity.api.model.PseudonymMappingDto;
 import com.camo.auth_gateway.wallet.domain.VerifiedClaims;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.repository.WalletSessionRepository;
@@ -15,6 +17,7 @@ import java.time.LocalDate;
 public class WalletCallbackService {
 
     private final WalletSessionRepository walletSessionRepository;
+    private final IdentityLookupApi identityLookupApi;
 
     @Transactional
     public void handleCallback(MultiValueMap<String, String> formData) {
@@ -53,7 +56,7 @@ public class WalletCallbackService {
         // 3. audience / client_id prüfen
         // 4. presentation_submission prüfen
         // 5. Claims aus vp_token extrahieren
-
+        PseudonymMappingDto identDto = identityLookupApi.findActiveMapping(session.getClientId(), vpToken).orElseThrow(() -> new IllegalArgumentException("Invalid vp token"));
         VerifiedClaims verifiedClaims = new VerifiedClaims(
                 "demo-subject",
                 "Max",
@@ -63,7 +66,8 @@ public class WalletCallbackService {
                 "demo-issuer"
         );
 
-        session.markVerified(verifiedClaims);
+
+        session.markVerified(verifiedClaims,identDto.externalUserId());
         walletSessionRepository.save(session);
     }
 }
