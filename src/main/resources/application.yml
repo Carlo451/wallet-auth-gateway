@@ -13,10 +13,10 @@ spring:
 gateway:
   app:
     network:
-      baseurl: http://100.80.20.126:8080
+      baseurl: https://camo-framework.gentoo-fiordland.ts.net:8443
   bridge:
     assertion:
-      issuer: http://100.80.20.126:8081
+      issuer: https://camo-framework.gentoo-fiordland.ts.net:8443
       gateway.bridge.assertion.registration-assertion-ttl-seconds: 60
       login-assertion-ttl-seconds: 30
     signing:
@@ -26,3 +26,12 @@ gateway:
       api-calls:
         register-read-timout-seconds: 5
         login-read-timeout-seconds: 5
+
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: classpath:keystore/keystore.p12
+    key-store-password: changeit
+    key-store-type: PKCS12
+    key-alias: tailscale

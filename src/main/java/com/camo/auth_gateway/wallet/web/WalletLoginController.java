@@ -6,6 +6,7 @@ import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
 import com.camo.auth_gateway.wallet.dto.authrequestobj.OpenId4VpAuthorizationRequest;
 import com.camo.auth_gateway.wallet.service.WalletCallbackService;
 import com.camo.auth_gateway.wallet.service.WalletFlowService;
+import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -27,7 +28,7 @@ public class WalletLoginController {
     }
 
     @GetMapping("/request/{sessionId}")
-    public String getRequestObject(@PathVariable UUID sessionId) {
+    public String getRequestObject(@PathVariable UUID sessionId) throws JOSEException {
         return walletFlowService.getRequestObject(sessionId);
     }
 
@@ -38,7 +39,7 @@ public class WalletLoginController {
 
     @PostMapping(
             value = "/callback",
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public void callback(@RequestParam MultiValueMap<String, String> formData) {
         walletCallbackService.handleCallback(formData);
