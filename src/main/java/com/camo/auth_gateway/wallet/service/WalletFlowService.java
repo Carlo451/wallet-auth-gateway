@@ -16,12 +16,14 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.Instant;
@@ -64,6 +66,7 @@ public class WalletFlowService {
         );
     }
 
+    @Transactional
     public String getRequestObject(UUID sessionId) throws JOSEException {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
@@ -139,14 +142,6 @@ public class WalletFlowService {
         dcqlQuery.setCredentialSets(List.of(Map.of("options",List.of(List.of("bdr-demo-hjvua_dc__sd-jwt")))));
         request.setDcqlQuery(dcqlQuery);
 
-
-        RSAKey publicJwk = new RSAKey.Builder(signingKeys.getPublicKey())
-                .keyID("bridge-key-1")
-                .build();
-
-        Map<String, Object> jwks =Map.of(
-                "keys", List.of(publicJwk.toJSONObject())
-        );
         ClientMetadata clientMetadata = new ClientMetadata();
         Map<String, Map<String,List<String>>> vpFormatsSupported = new HashMap<>();
         vpFormatsSupported.put("dc+sd-jwt",Map.of("sd-jwt_alg_values",List.of("ES256","ES384","ES512","EdDSA"),"kb-jwt_alg_values",List.of("ES256","ES384","ES512","EdDSA")));
@@ -154,12 +149,13 @@ public class WalletFlowService {
         clientMetadata.setAuthorizationEncryptedResponseAlg("ECDH-ES");
         clientMetadata.setAuthorizationEncryptedResponseEnc("A256GCM");
 
+        ECKey responseKeyPair = keyProv.getECKey().toPublicJWK();
         Map<String,String> key  = new HashMap<>();
         key.put("kty","EC");
         key.put("use","enc");
         key.put("crv","P-256");
-        key.put("x",keyProv.getECKey().getX().toString());
-        key.put("y",keyProv.getECKey().getY().toString());
+        key.put("x",responseKeyPair.getX().toString());
+        key.put("y",responseKeyPair.getY().toString());
         key.put("alg","ECDH-ES");
         clientMetadata.setJwks(Map.of("keys",List.of(key)));
 
@@ -180,9 +176,8 @@ public class WalletFlowService {
                 .claim("response_uri", request.getResponseUri())
                 .claim("dcql_query", objectMapper.convertValue(dcqlQuery,new TypeReference<Map<String, Object>>() {}))
                 .claim("client_metadata", objectMapper.convertValue(clientMetadata, new TypeReference<Map<String, Object>>() {}))
-                //.claim("jwks", objectMapper.convertValue(clientMetadata.getJwks(),new TypeReference<Map<String, Object>>() {}))
                 .build();
-
+        session.setEncEcJwkJson(responseKeyPair.toJSONString());
         try {
             String json = claims.toString();
             System.out.println(json);
@@ -193,17 +188,6 @@ public class WalletFlowService {
             signedJWT.sign(new RSASSASigner(signingKeys.getPrivateKey()));
 
             return signedJWT.serialize();
-            /*Map<String, Object> claimsMap =
-                    objectMapper.readValue(keyProv.getJson(), new TypeReference<Map<String, Object>>() {});
-            JWTClaimsSet claimss = JWTClaimsSet.parse(claimsMap);
-            String json = claimss.toString();
-            System.out.println(json);
-            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-                    .type(JOSEObjectType.JWT)
-                    .build();
-            SignedJWT signedJWT = new SignedJWT(header, claimss);
-            signedJWT.sign(new RSASSASigner(signingKeys.getPrivateKey()));
-            return signedJWT.serialize();*/
 
         } catch (Exception e) {
             throw new IllegalStateException("Could not sign OID4VP request object", e);

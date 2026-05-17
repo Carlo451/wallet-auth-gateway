@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -41,7 +42,7 @@ public class WalletLoginController {
             value = "/callback",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
-    public void callback(@RequestParam MultiValueMap<String, String> formData) {
+    public void callback(@RequestParam MultiValueMap<String, String> formData) throws Exception {
         walletCallbackService.handleCallback(formData);
     }
 }

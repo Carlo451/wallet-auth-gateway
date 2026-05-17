@@ -1,11 +1,5 @@
 package com.camo.auth_gateway.wallet.domain;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -55,6 +49,9 @@ public class WalletSession {
 
     @Column(name = "linked_identity_id")
     private String linkedIdentityId;
+
+    @Lob
+    private String encEcJwkJson;
 
     protected WalletSession() {
     }
@@ -143,6 +140,10 @@ public class WalletSession {
         this.externalVerificationId = externalVerificationId;
     }
 
+    public void setEncEcJwkJson(String encEcJwkJson) {
+        this.encEcJwkJson = encEcJwkJson;
+    }
+
     public String getFrontendRedirectUri() {
         return frontendRedirectUri;
     }
@@ -173,5 +174,9 @@ public class WalletSession {
 
     public String getLinkedIdentityId() {
         return linkedIdentityId;
+    }
+
+    public String getEncEcJwkJson() {
+        return encEcJwkJson;
     }
 }

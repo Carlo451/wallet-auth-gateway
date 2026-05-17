@@ -7,6 +7,8 @@ import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 
 @Component
 public class ECKeyProvider {
@@ -17,11 +19,11 @@ public class ECKeyProvider {
         ECKey ecJWK = new ECKeyGenerator(Curve.P_256)
                 .keyUse(com.nimbusds.jose.jwk.KeyUse.ENCRYPTION)
                 .algorithm(new com.nimbusds.jose.Algorithm("ECDH-ES"))
-                .keyID("enc-key-1")
+                .keyID(UUID.randomUUID().toString())
                 .generate();
 
 
-        return  ecJWK.toPublicJWK();
+        return  ecJWK;
     }
 
     public String getJson() {
