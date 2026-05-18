@@ -3,6 +3,7 @@ package com.camo.auth_gateway.wallet.service;
 import com.camo.auth_gateway.common.config.keys.ECKeyProvider;
 import com.camo.auth_gateway.common.config.keys.SigningKeys;
 import com.camo.auth_gateway.wallet.domain.WalletFlowState;
+import com.camo.auth_gateway.wallet.domain.WalletFlowType;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
@@ -70,77 +71,12 @@ public class WalletFlowService {
     public String getRequestObject(UUID sessionId) throws JOSEException {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
-
-        OpenId4VpAuthorizationRequest request = new OpenId4VpAuthorizationRequest();
-
-        request.setClientId(baseUrl);
-        request.setResponseType("vp_token");
-        request.setResponseMode("direct_post");
-        request.setResponseUri(baseUrl+"/api/wallet/callback");
-        request.setNonce(session.getNonce());
-        request.setState(session.getState());
-
-        DcqlClaimQuery givenNameClaim = new DcqlClaimQuery();
-        givenNameClaim.setId("1751");
-        givenNameClaim.setPath(List.of("age_in_years"));
-
-        // je nach Credential-Schema evtl. "birthdate"
-
-        DcqlCredentialMetaVctValues meta = new DcqlCredentialMetaVctValues();
-        meta.setVctValues(List.of("https://demo.pid-issuer.bundesdruckerei.de/credentials/pid/1.0"));
-
-        DcqlCredentialQuery credentialQuery = new DcqlCredentialQuery();
-        credentialQuery.setId("bdr-demo-hjvua_dc__sd-jwt");
-        credentialQuery.setFormat("dc+sd-jwt");
-        credentialQuery.setMeta(meta);
-        credentialQuery.setMultiple(false);
-        credentialQuery.setRequireCryptographicHolderBinding(false);
-        credentialQuery.setClaims(List.of());
-        credentialQuery.setClaims(List.of(givenNameClaim));
-
-
-        DcqlClaimQuery givenNameClaimMso = new DcqlClaimQuery();
-        givenNameClaimMso.setId("1751");
-        givenNameClaimMso.setPath(List.of("eu.europa.ec.eudi.pid.1","age_in_years"));
-
-        DcqlCredentialMetaDocType metaDoc = new DcqlCredentialMetaDocType();
-        metaDoc.setVctValues("eu.europa.ec.eudi.pid.1");
-
-        DcqlCredentialQuery credentialQueryDoc = new DcqlCredentialQuery();
-        credentialQueryDoc.setId("bdr-demo-hjvua_mso_mdoc");
-        credentialQueryDoc.setFormat("mso_mdoc");
-        credentialQueryDoc.setMeta(metaDoc);
-        credentialQueryDoc.setMultiple(false);
-        credentialQueryDoc.setRequireCryptographicHolderBinding(false);
-        credentialQueryDoc.setClaims(List.of(givenNameClaimMso));
-
-
-        DcqlClaimQuery givenNameClaimCreds = new DcqlClaimQuery();
-        givenNameClaimCreds.setId("1751");
-        givenNameClaimCreds.setPath(List.of("http://schema.org/age_in_years"));
-
-        DcqlCredentialMetaCredsType metaCredTyp = new DcqlCredentialMetaCredsType();
-        metaCredTyp.setVctValues(List.of("https://heidi-entity-ws-prod.ubique.ch/public/v2/schema/bdr-demo-hjvua/1.2.0"));
-
-        DcqlCredentialQuery credentialQueryCred = new DcqlCredentialQuery();
-        credentialQueryCred.setId("bdr-demo-hjvua_bbs-termwise");
-        credentialQueryCred.setFormat("bbs-termwise");
-        credentialQueryCred.setMeta(metaCredTyp);
-        credentialQueryCred.setMultiple(false);
-        credentialQueryCred.setRequireCryptographicHolderBinding(false);
-        credentialQueryCred.setClaims(List.of());
-        credentialQueryCred.setClaims(List.of(givenNameClaimCreds));
+        ECKey keyPair = keyProv.getECKey();
+        session.setEncEcJwkJson(keyPair.toJSONString());
+        DcqlQuery dcqlQuery = getDcqlQuery(session.getFlowType(),keyPair);
 
 
 
-
-
-        DcqlQuery dcqlQuery = new DcqlQuery();
-        //dcqlQuery.setCredentials(List.of(credentialQuery, credentialQueryDoc,credentialQueryCred));
-        dcqlQuery.setCredentials(List.of(credentialQuery));
-
-        dcqlQuery.setCredentialSets(List.of(Map.of("options",List.of(List.of("bdr-demo-hjvua_dc__sd-jwt")))));
-        request.setDcqlQuery(dcqlQuery);
 
         ClientMetadata clientMetadata = new ClientMetadata();
         Map<String, Map<String,List<String>>> vpFormatsSupported = new HashMap<>();
@@ -149,7 +85,7 @@ public class WalletFlowService {
         clientMetadata.setAuthorizationEncryptedResponseAlg("ECDH-ES");
         clientMetadata.setAuthorizationEncryptedResponseEnc("A256GCM");
 
-        ECKey responseKeyPair = keyProv.getECKey().toPublicJWK();
+        ECKey responseKeyPair = keyPair.toPublicJWK();
         Map<String,String> key  = new HashMap<>();
         key.put("kty","EC");
         key.put("use","enc");
@@ -162,18 +98,19 @@ public class WalletFlowService {
 
         Instant now = Instant.now();
 
+
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                .issuer(request.getClientId())
+                .issuer(session.getClientId())
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(now.plusSeconds(300)))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("client_id", request.getClientId())
-                .claim("response_type", request.getResponseType())
-                .claim("response_mode", request.getResponseMode())
-                .claim("nonce", request.getNonce())
-                .claim("state", request.getState())
+                .claim("client_id", session.getClientId())
+                .claim("response_type", "vp_token")
+                .claim("response_mode", "direct_post")
+                .claim("nonce", session.getNonce())
+                .claim("state", session.getState())
                 .claim("aud", "https://self-issued.me/v2")
-                .claim("response_uri", request.getResponseUri())
+                .claim("response_uri", baseUrl+"/api/wallet/callback")
                 .claim("dcql_query", objectMapper.convertValue(dcqlQuery,new TypeReference<Map<String, Object>>() {}))
                 .claim("client_metadata", objectMapper.convertValue(clientMetadata, new TypeReference<Map<String, Object>>() {}))
                 .build();
@@ -195,6 +132,69 @@ public class WalletFlowService {
 
 
 
+    }
+
+    public DcqlQuery getDcqlQuery(WalletFlowType flowType, ECKey key) {
+        if (WalletFlowType.LOGIN.equals(flowType)) {
+            return getDcqlQueryForLogin();
+        } else if (WalletFlowType.REGISTRATION.equals(flowType)) {
+            return getDcqlQueryForRegistration();
+        }
+        throw new IllegalArgumentException("Unknown flow type: " + flowType);
+    }
+
+
+    public DcqlQuery getDcqlQueryForRegistration() {
+        DcqlQuery dcqlQuery = new DcqlQuery();
+        DcqlClaimQuery givenNameClaim = new DcqlClaimQuery();
+        //givenNameClaim.setId("1751");
+        givenNameClaim.setPath(List.of("given_name"));
+
+        DcqlClaimQuery nameClaim = new DcqlClaimQuery();
+        //nameClaim.setId("1752");
+        nameClaim.setPath(List.of("family_name"));
+
+        // je nach Credential-Schema evtl. "birthdate"
+
+        DcqlCredentialMetaVctValues meta = new DcqlCredentialMetaVctValues();
+        meta.setVctValues(List.of("urn:eu.europa.ec.eudi.pid.1"));
+
+        DcqlCredentialQuery credentialQuery = new DcqlCredentialQuery();
+        credentialQuery.setId("ec-pid-hcr1h_dc__sd-jwt");
+        credentialQuery.setFormat("dc+sd-jwt");
+        credentialQuery.setMeta(meta);
+        credentialQuery.setMultiple(false);
+        credentialQuery.setRequireCryptographicHolderBinding(false);
+        credentialQuery.setClaims(List.of());
+        credentialQuery.setClaims(List.of(givenNameClaim,nameClaim));
+
+
+
+
+        dcqlQuery.setCredentials(List.of(credentialQuery));
+
+        dcqlQuery.setCredentialSets(List.of(Map.of("options",List.of(List.of("ec-pid-hcr1h_dc__sd-jwt")))));
+        return dcqlQuery;
+    }
+
+    public DcqlQuery getDcqlQueryForLogin() {
+        DcqlQuery dcqlQuery = new DcqlQuery();
+
+        DcqlCredentialMetaVctValues meta = new DcqlCredentialMetaVctValues();
+        meta.setVctValues(List.of("urn:eu.europa.ec.eudi.pid.1"));
+
+        DcqlCredentialQuery credentialQuery = new DcqlCredentialQuery();
+        credentialQuery.setId("ec-pid-hcr1h_dc__sd-jwt");
+        credentialQuery.setFormat("dc+sd-jwt");
+        credentialQuery.setMeta(meta);
+        credentialQuery.setMultiple(false);
+        credentialQuery.setRequireCryptographicHolderBinding(false);
+        credentialQuery.setClaims(List.of());
+
+        dcqlQuery.setCredentials(List.of(credentialQuery));
+
+        dcqlQuery.setCredentialSets(List.of(Map.of("options",List.of(List.of("ec-pid-hcr1h_dc__sd-jwt")))));
+        return dcqlQuery;
     }
 
     public String getOpenid4vpUrl(UUID sessionId) {

@@ -77,7 +77,7 @@ public class WalletCallbackService {
         JsonNode root = objectMapper.readTree(vpToken);
 
 
-        JsonNode sdJwtArray = root.get("bdr-demo-hjvua_dc__sd-jwt");
+        JsonNode sdJwtArray = root.get("ec-pid-hcr1h_dc__sd-jwt");
         String combined = sdJwtArray.get(0).asText();
         String[] parts = combined.split("~");
 
