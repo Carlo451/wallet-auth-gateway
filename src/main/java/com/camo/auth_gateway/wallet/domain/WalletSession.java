@@ -1,5 +1,7 @@
 package com.camo.auth_gateway.wallet.domain;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -35,7 +37,8 @@ public class WalletSession {
     @Column(name = "frontend_redirect_uri")
     private String frontendRedirectUri;
 
-    @Embedded
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "verified_claims", columnDefinition = "jsonb")
     private VerifiedClaims verifiedClaims;
 
     @Column(name = "created_at", nullable = false, updatable = false)

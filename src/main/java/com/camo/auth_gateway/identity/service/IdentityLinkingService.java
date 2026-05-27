@@ -5,8 +5,10 @@ import com.camo.auth_gateway.identity.api.model.PseudonymMappingDto;
 import com.camo.auth_gateway.identity.domain.PseudonymMapping;
 import com.camo.auth_gateway.identity.domain.PseudonymMappingStatus;
 import com.camo.auth_gateway.identity.repository.PseudonymMappingRepository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class IdentityLinkingService implements IdentityLinkingApi {
 
     private final PseudonymMappingRepository pseudonymMappingRepository;
@@ -18,6 +20,7 @@ public class IdentityLinkingService implements IdentityLinkingApi {
     @Transactional
     public PseudonymMappingDto createMapping(String clientId, String pseudonymValue, String externalUserId) {
         PseudonymMapping newMapping = new PseudonymMapping(clientId,pseudonymValue,externalUserId, null,  PseudonymMappingStatus.ACTIVE);
+        pseudonymMappingRepository.save(newMapping);
         return PseudonymMappingDto.from(newMapping);
     }
 }

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Auth Gateway - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b1020;
+            --panel: rgba(17, 24, 39, 0.78);
+            --panel-strong: #111827;
+            --border: rgba(255,255,255,0.08);
+            --text: #f3f4f6;
+            --muted: #9ca3af;
+            --primary: #3b82f6;
+            --primary-2: #2563eb;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --shadow: 0 20px 50px rgba(0,0,0,0.35);
+            --radius: 20px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Inter", sans-serif;
+            color: var(--text);
+            background:
+                    radial-gradient(circle at top left, rgba(59,130,246,.22), transparent 30%),
+                    radial-gradient(circle at bottom right, rgba(168,85,247,.18), transparent 28%),
+                    linear-gradient(135deg, #0b1020 0%, #111827 45%, #0f172a 100%);
+            min-height: 100vh;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            padding: 32px 24px;
+            border-right: 1px solid var(--border);
+            background: rgba(11, 16, 32, 0.55);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .brand p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-card {
+            margin-top: 36px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .nav-item {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(59,130,246,.14);
+            color: white;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 32px;
+        }
+
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .hero h2 {
+            margin: 0;
+            font-size: 34px;
+            letter-spacing: -0.04em;
+        }
+
+        .hero p {
+            margin: 10px 0 0;
+            color: var(--muted);
+            max-width: 760px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.05fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .card-header {
+            padding: 22px 24px 8px;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .card-header p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #d1d5db;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font: inherit;
+            outline: none;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: rgba(59,130,246,.7);
+            box-shadow: 0 0 0 4px rgba(59,130,246,.16);
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .switches {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-top: 4px;
+        }
+
+        .switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #d1d5db;
+            font-size: 14px;
+        }
+
+        .claims-inputs {
+            display: grid;
+            gap: 10px;
+        }
+
+        .claims-hint {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .actions {
+            margin-top: 22px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 18px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            color: white;
+        }
+
+        .btn-danger {
+            background: rgba(239,68,68,.12);
+            color: #fecaca;
+            border: 1px solid rgba(239,68,68,.22);
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 12px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+        }
+
+        td strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pill.enabled {
+            background: rgba(34,197,94,.12);
+            color: #bbf7d0;
+        }
+
+        .pill.disabled {
+            background: rgba(239,68,68,.12);
+            color: #fecaca;
+        }
+
+        .claims {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .claim {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: #e5e7eb;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        .subsection {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .subsection-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .inline-form {
+            margin: 0;
+        }
+
+        .inline-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .empty {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 1100px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .content, .sidebar {
+                padding: 20px;
+            }
+
+            .hero {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .brand h1 {
+                font-size: 24px;
+            }
+
+            .hero h2 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <h1>Wallet Auth Gateway</h1>
+            <p>Admin Dashboard</p>
+        </div>
+
+        <div class="nav-card">
+            <div class="nav-label">Configuration</div>
+            <div class="nav-item">Client Settings</div>
+        </div>
+    </aside>
+
+    <main class="content">
+        <section class="hero">
+            <div>
+                <h2>Client Settings</h2>
+                <p>Verwalte Clients, Endpunkte, Redirect URIs, Requested Claims und zusätzliche Asked Claims for Register zentral in einer Oberfläche.</p>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card">
+                <div class="card-header">
+                    <h3>Neuen Client anlegen</h3>
+                    <p>Lege hier einen neuen Gateway-Client mit den vorhandenen Entity-Feldern an.</p>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/clients}" th:object="${clientForm}" method="post">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="clientId">Client ID</label>
+                                <input id="clientId" type="text" th:field="*{clientId}" required>
+                            </div>
+
+                            <div class="field">
+                                <label for="name">Name</label>
+                                <input id="name" type="text" th:field="*{name}" required>
+                            </div>
+
+                            <div class="field full">
+                                <label for="description">Beschreibung</label>
+                                <textarea id="description" th:field="*{description}"></textarea>
+                            </div>
+
+                            <div class="field">
+                                <label for="baseUrl">Base URL</label>
+                                <input id="baseUrl" type="text" th:field="*{baseUrl}">
+                            </div>
+
+                            <div class="field">
+                                <label for="audience">Audience</label>
+                                <input id="audience" type="text" th:field="*{audience}">
+                            </div>
+
+                            <div class="field">
+                                <label for="loginEndpoint">Login Endpoint</label>
+                                <input id="loginEndpoint" type="text" th:field="*{loginEndpoint}">
+                            </div>
+
+                            <div class="field">
+                                <label for="registrationEndpoint">Registration Endpoint</label>
+                                <input id="registrationEndpoint" type="text" th:field="*{registrationEndpoint}">
+                            </div>
+
+                            <div class="field">
+                                <label for="successRedirectUri">Success Redirect URI</label>
+                                <input id="successRedirectUri" type="text" th:field="*{successRedirectUri}">
+                            </div>
+
+                            <div class="field">
+                                <label for="errorRedirectUri">Error Redirect URI</label>
+                                <input id="errorRedirectUri" type="text" th:field="*{errorRedirectUri}">
+                            </div>
+
+                            <div class="field">
+                                <label for="flowType">Flow Type</label>
+                                <select id="flowType" th:field="*{flowType}">
+                                    <option th:each="flowType : ${flowTypes}"
+                                            th:value="${flowType}"
+                                            th:text="${flowType}">
+                                    </option>
+                                </select>
+                            </div>
+
+
+
+                            <div class="field full">
+                                <div class="switches">
+                                    <label class="switch">
+                                        <input type="checkbox" th:field="*{enabled}" value="true">
+                                        <span>Enabled</span>
+                                    </label>
+                                    <label class="switch">
+                                        <input type="checkbox" th:field="*{autoProvisioningEnabled}" value="true">
+                                        <span>Auto Provisioning</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-primary" type="submit">Client speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-header">
+                    <h3>Vorhandene Clients</h3>
+                    <p>Vorhandene Konfigurationen inklusive Register-Claims und Löschaktionen.</p>
+                </div>
+                <div class="card-body table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Flow</th>
+                            <th>Status</th>
+                            <th>Claims</th>
+                            <th>Aktion</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="client : ${clients}">
+                            <td>
+                                <strong th:text="${client.name}">Client Name</strong>
+                                <span th:text="${client.clientId}">client-id</span><br>
+                                <small th:text="${client.baseUrl}">https://example.org</small>
+                            </td>
+
+                            <td th:text="${client.flowType}">LOGIN_AND_REGISTRATION</td>
+
+                            <td>
+                                <span class="pill"
+                                      th:classappend="${client.enabled} ? 'enabled' : 'disabled'"
+                                      th:text="${client.enabled} ? 'Enabled' : 'Disabled'">
+                                    Enabled
+                                </span>
+                            </td>
+
+                            <td>
+
+
+                                <div class="subsection">
+                                    <div class="subsection-title">Asked Claims for Register</div>
+                                    <div class="claims" th:if="${!#lists.isEmpty(client.askedClaimsForRegister)}">
+                                        <span class="claim"
+                                              th:each="askedClaim : ${client.askedClaimsForRegister}"
+                                              th:text="${askedClaim.claimName}">claim</span>
+                                    </div>
+                                    <div class="empty" th:if="${#lists.isEmpty(client.askedClaimsForRegister)}">
+                                        Keine Asked Claims for Register vorhanden.
+                                    </div>
+
+                                    <div style="margin-top: 10px;">
+                                        <form class="inline-stack"
+                                              th:action="@{/admin/clients/{id}/asked-claims(id=${client.id})}"
+                                              method="post">
+                                            <input type="text" name="claimName" placeholder="claim_name" required>
+                                            <button class="btn btn-primary btn-small" type="submit">Hinzufügen</button>
+                                        </form>
+                                    </div>
+
+                                    <div class="inline-stack" style="margin-top: 10px;"
+                                         th:if="${!#lists.isEmpty(client.askedClaimsForRegister)}">
+                                        <form class="inline-form"
+                                              th:each="askedClaim : ${client.askedClaimsForRegister}"
+                                              th:action="@{/admin/clients/{clientId}/asked-claims/{claimId}/delete(clientId=${client.id}, claimId=${askedClaim.id})}"
+                                              method="post">
+                                            <button class="btn btn-danger btn-small" type="submit"
+                                                    th:text="'Löschen: ' + ${askedClaim.claimName}">
+                                                Löschen
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <form class="inline-form"
+                                      th:action="@{/admin/clients/{id}/delete(id=${client.id})}"
+                                      method="post">
+                                    <button class="btn btn-danger" type="submit">Client löschen</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(clients)}">
+                            <td colspan="5">Noch keine Client Settings vorhanden.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </main>
+</div>
+</body>
+</html>

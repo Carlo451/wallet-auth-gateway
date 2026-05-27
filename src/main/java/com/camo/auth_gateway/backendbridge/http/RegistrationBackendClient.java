@@ -19,7 +19,7 @@ public class RegistrationBackendClient {
     }
 
     public RegistrationBackendResponse register(String registrationEndpoint,
-                                                RegistrationAssertionRequest request) {
+                                                RegistrationAssertionRequest request) throws BackendRegistrationFailedException {
         return restClient.post()
                 .uri(registrationEndpoint)
                 .contentType(MediaType.APPLICATION_JSON)

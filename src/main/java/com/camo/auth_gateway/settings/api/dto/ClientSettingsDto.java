@@ -1,5 +1,6 @@
 package com.camo.auth_gateway.settings.api.dto;
 
+import com.camo.auth_gateway.settings.domain.AskedClaimForRegister;
 import com.camo.auth_gateway.settings.domain.ClientFlowType;
 import com.camo.auth_gateway.settings.domain.ClientSettings;
 
@@ -19,7 +20,7 @@ public record ClientSettingsDto(
         String audience,
         ClientFlowType flowType,
         boolean autoProvisioningEnabled,
-        List<String> requestedClaims
+        List<String> requestedClaimsForRegister
 ) {
 
     public static ClientSettingsDto from(ClientSettings clientSettings) {
@@ -37,7 +38,7 @@ public record ClientSettingsDto(
                 clientSettings.getAudience(),
                 clientSettings.getFlowType(),
                 clientSettings.isAutoProvisioningEnabled(),
-                List.copyOf(clientSettings.getRequestedClaims())
+                List.copyOf(clientSettings.getAskedClaimsForRegister().stream().map(AskedClaimForRegister::getClaimName).toList())
         );
     }
 }

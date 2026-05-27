@@ -3,7 +3,6 @@ package com.camo.auth_gateway.backendbridge.service;
 import com.camo.auth_gateway.backendbridge.api.LoginAssertionConsumptionApi;
 import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionEntity;
 import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionStatus;
-import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionType;
 import com.camo.auth_gateway.backendbridge.repository.BridgeAssertionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,11 +12,11 @@ import java.time.Instant;
 import java.util.Optional;
 
 @Service
-public class LoginAssertionConsumptionService implements LoginAssertionConsumptionApi {
+public class AssertionConsumptionService implements LoginAssertionConsumptionApi {
     private final BridgeAssertionRepository bridgeAssertionRepository;
     private final Clock clock;
 
-    public LoginAssertionConsumptionService(BridgeAssertionRepository bridgeAssertionRepository, Clock clock, Clock clock1) {
+    public AssertionConsumptionService(BridgeAssertionRepository bridgeAssertionRepository, Clock clock, Clock clock1) {
         this.bridgeAssertionRepository = bridgeAssertionRepository;
         this.clock = clock1;
     }
@@ -35,14 +34,14 @@ public class LoginAssertionConsumptionService implements LoginAssertionConsumpti
             );
         }
         BridgeAssertionEntity  assertion = assertionOpt.get();
-        if (assertion.getAssertionType() != BridgeAssertionType.LOGIN) {
+        /*if (assertion.getAssertionType() != BridgeAssertionType.LOGIN) {
             return new ConsumeLoginAssertionResult(
                     jti,
                     false,
                     ConsumeLoginAssertionReason.ASSERTION_TYPE_MISMATCH,
                     null
             );
-        }
+        }*/
         if (!assertion.getClientId().equals(clientId)) {
             return new ConsumeLoginAssertionResult(
                     jti,

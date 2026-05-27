@@ -56,15 +56,11 @@ public class ClientSettings {
     @Column(name = "auto_provisioning_enabled", nullable = false)
     private boolean autoProvisioningEnabled = false;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "client_requested_claims",
-            joinColumns = @JoinColumn(name = "client_settings_id")
-    )
-    @Column(name = "claim_name", nullable = false, length = 100)
-    private List<String> requestedClaims = new ArrayList<>();
 
-    protected ClientSettings() {
+    @OneToMany(mappedBy = "settings", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AskedClaimForRegister> askedClaimsForRegister = new ArrayList<>();
+
+    public ClientSettings() {
     }
 
     public ClientSettings(String clientId,
@@ -92,7 +88,7 @@ public class ClientSettings {
         this.audience = audience;
         this.flowType = flowType;
         this.autoProvisioningEnabled = autoProvisioningEnabled;
-        this.requestedClaims = requestedClaims != null ? new ArrayList<>(requestedClaims) : new ArrayList<>();
+
     }
 
     public Long getId() {
@@ -147,9 +143,6 @@ public class ClientSettings {
         return autoProvisioningEnabled;
     }
 
-    public List<String> getRequestedClaims() {
-        return requestedClaims;
-    }
 
     public void setName(String name) {
         this.name = name;
@@ -195,7 +188,25 @@ public class ClientSettings {
         this.autoProvisioningEnabled = autoProvisioningEnabled;
     }
 
-    public void setRequestedClaims(List<String> requestedClaims) {
-        this.requestedClaims = requestedClaims != null ? new ArrayList<>(requestedClaims) : new ArrayList<>();
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public List<AskedClaimForRegister> getAskedClaimsForRegister() {
+        return askedClaimsForRegister;
+    }
+
+    public void setAskedClaimsForRegister(List<AskedClaimForRegister> askedClaimsForRegister) {
+        this.askedClaimsForRegister = askedClaimsForRegister;
+    }
+
+    public void addAskedClaimForRegister(AskedClaimForRegister claim) {
+        askedClaimsForRegister.add(claim);
+        claim.setSettings(this);
+    }
+
+    public void removeAskedClaimForRegister(AskedClaimForRegister claim) {
+        askedClaimsForRegister.remove(claim);
+        claim.setSettings(null);
     }
 }

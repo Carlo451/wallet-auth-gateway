@@ -29,7 +29,7 @@ public class WalletLoginController {
     }
 
     @GetMapping("/request/{sessionId}")
-    public String getRequestObject(@PathVariable UUID sessionId) throws JOSEException {
+    public String getRequestObject(@PathVariable UUID sessionId) throws Exception {
         return walletFlowService.getRequestObject(sessionId);
     }
 

@@ -36,7 +36,7 @@ public class RegistrationAssertionFactory {
                 .audience(clientSettings.audience())
                 .issueTime(Date.from(issuedAt))
                 .expirationTime(Date.from(expiresAt))
-                .jwtID(UUID.randomUUID().toString())
+                .jwtID(command.jti())
                 .claim("client_id", clientSettings.clientId())
                 .claim("flow_type", "registration")
                 .claim("registration_session_id", command.registrationSessionId())

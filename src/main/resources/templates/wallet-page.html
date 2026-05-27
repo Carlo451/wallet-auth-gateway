@@ -138,7 +138,12 @@
             statusBadge.className = "status " + status;
 
             if (data.status === "VERIFIED" || data.status === "FAILED" || data.status === "EXPIRED") {
+
                 clearInterval(intervalId);
+                if (data.status === "VERIFIED") {
+                    window.location.href = `/wallet/auth/continue/${sessionId}`;
+                }
+
             }
         } catch (e) {
             console.error("Polling failed", e);
