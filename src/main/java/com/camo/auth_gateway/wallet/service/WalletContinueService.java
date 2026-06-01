@@ -34,7 +34,7 @@ public class WalletContinueService {
 
     public WalletAuthContinueResponse createLoginAssertion(WalletSession session) {
         ClientSettingsDto dto = ClientSettingsDto.from(clientSettingRepository.findByClientId(session.getClientId()).orElseThrow(() -> new EntityNotFoundException("Could not find ClientId")));
-        IssueLoginAssertionCommand cpmmand = new IssueLoginAssertionCommand(session.getClientId(), WalletFlowType.LOGIN.toString(), session.getLinkedIdentityId());
+        IssueLoginAssertionCommand cpmmand = new IssueLoginAssertionCommand(session.getClientId(), WalletFlowType.LOGIN.toString(), session.getExternalVerificationId());
         return new WalletAuthContinueResponse(issueLoginAssertionUseCase.createLoginAssertion(cpmmand),dto.baseUrl()+dto.loginEndpoint());
     }
 

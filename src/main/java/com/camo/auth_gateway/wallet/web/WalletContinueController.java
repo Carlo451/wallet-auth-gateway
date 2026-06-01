@@ -29,12 +29,12 @@ public class WalletContinueController {
 
         if (session.getFlowType().equals(WalletFlowType.REGISTRATION)) {
             walletContinueService.startRegistration(session);
+            return "redirect:/wallet/registration-success/{sessionId}";
         } else {
             WalletAuthContinueResponse result = walletContinueService.createLoginAssertion(session);
             model.addAttribute("sessionId", sessionId);
-            return "redirect:" + result.redirectExternalBackendUri()+"/"+result.result().signedAssertion();
+            return "redirect:" + result.redirectExternalBackendUri()+result.result().signedAssertion();
         }
-        return null;
 
     }
 }

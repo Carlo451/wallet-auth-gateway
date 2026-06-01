@@ -3,16 +3,19 @@ package com.camo.auth_gateway.wallet.web;
 import com.camo.auth_gateway.wallet.domain.WalletFlowType;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
+import com.camo.auth_gateway.wallet.dto.WalletRegSuccessResponse;
 import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
 import com.camo.auth_gateway.wallet.service.WalletCallbackService;
 import com.camo.auth_gateway.wallet.service.WalletFlowService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.UUID;
 
@@ -29,6 +32,7 @@ public class WalletPageController {
 
         model.addAttribute("sessionId", sessionId);
         model.addAttribute("status", status.status());
+        model.addAttribute("flowType", status.flowType().toString());
         model.addAttribute("openid4vpUrl",walletFlowService.getOpenid4vpUrl(sessionId));
 
         return "wallet-page";
@@ -61,18 +65,25 @@ public class WalletPageController {
     }
 
     @GetMapping("/wallet/error/{sessionId}")
-    @ResponseBody
-    public WalletStatusResponse walletError(@PathVariable UUID sessionId) {
-        return walletFlowService.getStatus(sessionId);
+    public String walletError(Model model, @PathVariable UUID sessionId) {
+        model.addAttribute("sessionId", sessionId);
+        model.addAttribute("stacktrace","Not yet");
+        model.addAttribute("errorMessage","Something went wrong");
+
+        return "wallet-error";
     }
 
-    @GetMapping("/wallet/continue/{sessionId}")
+    @GetMapping("/wallet/registration-success/{sessionId}")
+    public String registrationSuccess(@PathVariable UUID sessionId, Model model) {
+        WalletRegSuccessResponse res = walletFlowService.getSuccessfullRegResponse(sessionId);
+        model.addAttribute("redirectUrl", res.redirectUrl());
+        model.addAttribute("sessionId", sessionId);
+        return "registration-success";
+    }
+
+    /*@GetMapping("/wallet/continue/{sessionId}")
     public String continueAfterWallet(@PathVariable UUID sessionId, Model model) {
-        //WalletCallbackResult result = walletCallbackService.handleCallback(sessionId);
-
-        //model.addAttribute("assertion", result.signedAssertion());
-        //model.addAttribute("externalLoginUrl", result.externalLoginUrl());
-
         return "bridge-login-handoff";
-    }
+    }*/
+
 }

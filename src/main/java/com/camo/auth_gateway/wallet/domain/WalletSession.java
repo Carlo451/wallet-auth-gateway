@@ -107,6 +107,10 @@ public class WalletSession {
 
     }
 
+    public void markError(Exception error) {
+        this.flowState = WalletFlowState.FAILED;
+    }
+
     public void markFailed() {
         this.flowState = WalletFlowState.FAILED;
     }

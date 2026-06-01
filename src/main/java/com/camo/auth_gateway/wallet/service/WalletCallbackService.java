@@ -100,14 +100,14 @@ public class WalletCallbackService {
         }
         if (session.getFlowType().equals(WalletFlowType.LOGIN) ) {
             if (identDto.isEmpty()) {
-                throw new IllegalStateException("No wallet active mapping found for LOGIN");
-
+                session.markError(new IllegalArgumentException("Could not map identwith db."));
             } else {
+                session.setExternalVerificationId(identDto.get().externalUserId());
                 session.markVerified(verifiedClaims,identification);
             }
         } else if (WalletFlowType.REGISTRATION.equals(session.getFlowType())) {
             if (identDto.isPresent()) {
-                throw new IllegalStateException("active wallet mapping found for REGISTRATION");
+                session.markError(new IllegalArgumentException("Ident exists in db"));
             } else {
                 session.markVerified(verifiedClaims,identification);
             }

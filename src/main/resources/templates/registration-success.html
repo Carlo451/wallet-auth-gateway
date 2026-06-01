@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration Success</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f7f7f8;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .redirect {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .actions {
+            margin-top: 24px;
+        }
+
+        a.button {
+            display: inline-block;
+            padding: 12px 18px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .hint {
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="status">SUCCESS</div>
+
+    <h1>Registrierung erfolgreich</h1>
+    <p>Deine Registrierung wurde erfolgreich abgeschlossen.</p>
+
+    <div class="box">
+        <div class="label">Weiterleitung</div>
+        <div class="redirect">
+            Du wirst in <span id="countdown">5</span> Sekunden automatisch weitergeleitet.
+        </div>
+    </div>
+
+    <div class="actions">
+        <a class="button" id="continueLink" th:href="${redirectUrl}" href="/">
+            Jetzt weiter
+        </a>
+    </div>
+
+    <div class="hint">
+        Session-ID: <span th:text="${sessionId}">-</span>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const redirectUrl = [[${redirectUrl}]] || "/";
+    const countdownElement = document.getElementById("countdown");
+    const continueLink = document.getElementById("continueLink");
+    continueLink.href = redirectUrl;
+
+    let seconds = 5;
+
+    const intervalId = setInterval(() => {
+        seconds--;
+        countdownElement.textContent = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(intervalId);
+            window.location.href = redirectUrl;
+        }
+    }, 1000);
+</script>
+</body>
+</html>

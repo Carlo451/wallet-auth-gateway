@@ -85,7 +85,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Wallet Login</h1>
+    <h1 th:text="${flowType}"></h1>
     <p>Scanne den QR-Code mit deiner Wallet oder öffne den Link auf demselben Gerät.</p>
 
     <div id="statusBadge"
@@ -142,6 +142,9 @@
                 clearInterval(intervalId);
                 if (data.status === "VERIFIED") {
                     window.location.href = `/wallet/auth/continue/${sessionId}`;
+                }
+                if (data.status === "FAILED") {
+                    window.location.href = `/wallet/error/${sessionId}`;
                 }
 
             }

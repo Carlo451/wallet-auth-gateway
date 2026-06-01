@@ -2,10 +2,14 @@ package com.camo.auth_gateway.wallet.service;
 
 import com.camo.auth_gateway.common.config.keys.ECKeyProvider;
 import com.camo.auth_gateway.common.config.keys.SigningKeys;
+import com.camo.auth_gateway.settings.api.ClientSettingsLookupApi;
+import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
+import com.camo.auth_gateway.settings.service.SettingsLookupService;
 import com.camo.auth_gateway.wallet.domain.WalletFlowState;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
+import com.camo.auth_gateway.wallet.dto.WalletRegSuccessResponse;
 import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
 import com.camo.auth_gateway.wallet.repository.WalletSessionRepository;
 import com.camo.auth_gateway.walletprovs.HeidiWallet;
@@ -38,6 +42,7 @@ public class WalletFlowService {
     private final SigningKeys signingKeys;
     private final ObjectMapper objectMapper;
     private final ECKeyProvider keyProv;
+    private final ClientSettingsLookupApi clientSettingsLookupApi;
 
     public StartWalletLoginResponse startLogin(StartWalletLoginRequest request) {
         Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
@@ -118,7 +123,22 @@ public class WalletFlowService {
                 session.getId(),
                 state.name(),
                 state == WalletFlowState.VERIFIED,
-                expired
+                expired,
+                session.getFlowType()
         );
     }
+
+    public WalletRegSuccessResponse getSuccessfullRegResponse(UUID sessionId) {
+        WalletSession session = walletSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
+        ClientSettingsDto dto = clientSettingsLookupApi.lookupClientSettingsWithClientId(session.getClientId());
+
+
+        return new WalletRegSuccessResponse(
+                dto.baseUrl()
+        );
+    }
+
+
+
 }
