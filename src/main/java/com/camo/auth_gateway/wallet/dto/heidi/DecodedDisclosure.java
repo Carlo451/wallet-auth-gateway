@@ -9,6 +9,7 @@ public class DecodedDisclosure {
     String digest;
 
 
+
     public String getSalt() {
         return salt;
     }

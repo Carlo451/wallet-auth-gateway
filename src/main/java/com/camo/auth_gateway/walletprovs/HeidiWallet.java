@@ -1,9 +1,11 @@
 package com.camo.auth_gateway.walletprovs;
 
+import com.camo.auth_gateway.identity.api.IdentityCreationApi;
 import com.camo.auth_gateway.wallet.domain.WalletFlowType;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.dto.authrequestobj.*;
 import com.camo.auth_gateway.wallet.dto.heidi.DecodedDisclosure;
+import com.camo.auth_gateway.wallet.dto.heidi.HeidiVPTokenObject;
 import com.camo.auth_gateway.wallet.dto.heidi.WalletVPTokenObject;
 
 
@@ -16,6 +18,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.service.spi.InjectService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
+import java.security.KeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
@@ -31,15 +35,18 @@ import java.util.*;
 
 
 @Component
-public class HeidiWallet implements WalletProvider {
+public class HeidiWallet implements WalletProvider<HeidiVPTokenObject> {
     private final ObjectMapper objectMapper;
+
+    private final IdentityCreationApi identityCreationApi;
 
     private String baseUrl;
 
-    public HeidiWallet(ObjectMapper objectMapper,
+    public HeidiWallet(ObjectMapper objectMapper,IdentityCreationApi identityCreationApi,
                        @Value("${gateway.app.network.baseurl}") String baseUrl) {
         this.objectMapper = objectMapper;
         this.baseUrl = baseUrl;
+        this.identityCreationApi = identityCreationApi;
     }
 
     @Override
@@ -76,7 +83,7 @@ public class HeidiWallet implements WalletProvider {
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(now.plusSeconds(300)))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("client_id", session.getClientId())
+                .claim("client_id", "https://camo-framework.gentoo-fiordland.ts.net:8443")
                 .claim("response_type", "vp_token")
                 .claim("response_mode", "direct_post")
                 .claim("nonce", session.getNonce())
@@ -89,27 +96,15 @@ public class HeidiWallet implements WalletProvider {
     }
 
     @Override
-    public String buildWalletIdFromWalletDisclosures(WalletVPTokenObject tokenObject) throws Exception {
+    public String buildWalletIdFromWalletDisclosures(HeidiVPTokenObject tokenObject) throws Exception {
+        boolean keyBinding = tokenObject.verifyKeyBinding();
+        if (!keyBinding) throw new KeyException("The Key Binding is not valid");
 
         DecodedDisclosure givenNameDisc = tokenObject.findDisclosureObjectForClaimName("given_name");
         DecodedDisclosure famNameDisc = tokenObject.findDisclosureObjectForClaimName("family_name");
         DecodedDisclosure birthPlaceDisc = tokenObject.findDisclosureObjectForClaimName("birth_place");
         DecodedDisclosure birthDateDisc = tokenObject.findDisclosureObjectForClaimName("birth_date");
-        String input= givenNameDisc.getClaimValue() + famNameDisc.getClaimValue() + birthPlaceDisc.getClaimValue() + birthDateDisc.getClaimValue();
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-
-            StringBuilder hex = new StringBuilder(2 * hashBytes.length);
-            for (byte b : hashBytes) {
-                String h = Integer.toHexString(0xff & b);
-                if (h.length() == 1) hex.append('0');
-                hex.append(h);
-            }
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 not available", e);
-        }
+        return identityCreationApi.buildIdentityLink(givenNameDisc.getClaimValue(),famNameDisc.getClaimValue(),birthPlaceDisc.getClaimValue(), birthDateDisc.getClaimValue());
     }
 
 

@@ -18,7 +18,6 @@ public record ClientSettingsDto(
         String successRedirectUri,
         String errorRedirectUri,
         String audience,
-        ClientFlowType flowType,
         boolean autoProvisioningEnabled,
         List<String> requestedClaimsForRegister
 ) {
@@ -36,7 +35,6 @@ public record ClientSettingsDto(
                 clientSettings.getSuccessRedirectUri(),
                 clientSettings.getErrorRedirectUri(),
                 clientSettings.getAudience(),
-                clientSettings.getFlowType(),
                 clientSettings.isAutoProvisioningEnabled(),
                 List.copyOf(clientSettings.getAskedClaimsForRegister().stream().map(AskedClaimForRegister::getClaimName).toList())
         );

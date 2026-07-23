@@ -2,6 +2,7 @@ package com.camo.auth_gateway.wallet.service;
 
 import com.camo.auth_gateway.common.config.keys.ECKeyProvider;
 import com.camo.auth_gateway.common.config.keys.SigningKeys;
+import com.camo.auth_gateway.identity.api.IdentityCreationApi;
 import com.camo.auth_gateway.settings.api.ClientSettingsLookupApi;
 import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
 import com.camo.auth_gateway.settings.service.SettingsLookupService;
@@ -43,6 +44,8 @@ public class WalletFlowService {
     private final ObjectMapper objectMapper;
     private final ECKeyProvider keyProv;
     private final ClientSettingsLookupApi clientSettingsLookupApi;
+    private final IdentityCreationApi identityCreationApi;
+
 
     public StartWalletLoginResponse startLogin(StartWalletLoginRequest request) {
         Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
@@ -76,7 +79,7 @@ public class WalletFlowService {
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
         ECKey keyPair = keyProv.getECKey();
         session.setEncEcJwkJson(keyPair.toJSONString());
-        HeidiWallet wallet = new HeidiWallet(objectMapper,baseUrl);
+        HeidiWallet wallet = new HeidiWallet(objectMapper,identityCreationApi,baseUrl);
         //Paradym wallet = new Paradym(objectMapper,baseUrl);
         var claims = wallet.buildJWTClaimsSet(session.getFlowType(),session);
 

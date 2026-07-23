@@ -455,15 +455,7 @@
                                 <input id="errorRedirectUri" type="text" th:field="*{errorRedirectUri}">
                             </div>
 
-                            <div class="field">
-                                <label for="flowType">Flow Type</label>
-                                <select id="flowType" th:field="*{flowType}">
-                                    <option th:each="flowType : ${flowTypes}"
-                                            th:value="${flowType}"
-                                            th:text="${flowType}">
-                                    </option>
-                                </select>
-                            </div>
+
 
 
 
@@ -512,7 +504,7 @@
                                 <small th:text="${client.baseUrl}">https://example.org</small>
                             </td>
 
-                            <td th:text="${client.flowType}">LOGIN_AND_REGISTRATION</td>
+
 
                             <td>
                                 <span class="pill"

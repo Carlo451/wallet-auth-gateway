@@ -5,6 +5,7 @@ import com.camo.auth_gateway.backendbridge.api.IssueLoginAssertionUseCase;
 import com.camo.auth_gateway.backendbridge.api.dto.IssueLoginAssertionCommand;
 import com.camo.auth_gateway.backendbridge.api.dto.IssueLoginAssertionResult;
 import com.camo.auth_gateway.backendbridge.assertation.LoginAssertionFactory;
+import com.camo.auth_gateway.identity.api.IdentityCreationApi;
 import com.camo.auth_gateway.identity.api.IdentityLookupApi;
 import com.camo.auth_gateway.identity.api.model.PseudonymMappingDto;
 import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
@@ -48,6 +49,7 @@ public class WalletCallbackService {
     private final WalletSessionRepository walletSessionRepository;
     private final IdentityLookupApi identityLookupApi;
     private final ObjectMapper objectMapper;
+    private final IdentityCreationApi identityCreationApi;
 
     @Transactional
     public void handleCallback(MultiValueMap<String, String> formData) throws Exception {
@@ -80,9 +82,15 @@ public class WalletCallbackService {
             throw new IllegalArgumentException("Missing vp_token");
         }
 
-        HeidiVPTokenObject heidiObj = HeidiVPTokenObject.parseVpToken("ec-pid-hcr1h_dc__sd-jwt",vpToken,objectMapper);
+        HeidiVPTokenObject heidiObj = HeidiVPTokenObject.parseVpToken(vpToken,objectMapper);
+        if (!heidiObj.verifiyDisclosures() || !heidiObj.verifyKeyBinding()) {
+            session.markFailed();
+            walletSessionRepository.save(session);
+            return;
+        }
 
-        HeidiWallet wallet = new HeidiWallet(objectMapper,"");
+
+        HeidiWallet wallet = new HeidiWallet(objectMapper,identityCreationApi,"");
         String identification = wallet.buildWalletIdFromWalletDisclosures(heidiObj);
 
 

@@ -29,7 +29,7 @@ public class ClientSettingsAdminController {
         model.addAttribute("clientForm", new ClientSettings());
         model.addAttribute("askedClaimForm", new AskedClaimForRegisterForm());
         model.addAttribute("clients", clientSettingsRepository.findAll(Sort.by(Sort.Direction.ASC, "name")));
-        model.addAttribute("flowTypes", ClientFlowType.values());
+        //model.addAttribute("flowTypes", ClientFlowType.values());
         return "admin/clients";
     }
 

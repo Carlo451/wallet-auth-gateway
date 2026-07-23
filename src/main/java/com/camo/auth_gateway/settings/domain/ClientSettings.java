@@ -49,9 +49,6 @@ public class ClientSettings {
     @Column(name = "audience", length = 255)
     private String audience;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "flow_type", nullable = false, length = 30)
-    private ClientFlowType flowType = ClientFlowType.LOGIN_AND_REGISTRATION;
 
     @Column(name = "auto_provisioning_enabled", nullable = false)
     private boolean autoProvisioningEnabled = false;
@@ -86,7 +83,6 @@ public class ClientSettings {
         this.successRedirectUri = successRedirectUri;
         this.errorRedirectUri = errorRedirectUri;
         this.audience = audience;
-        this.flowType = flowType;
         this.autoProvisioningEnabled = autoProvisioningEnabled;
 
     }
@@ -135,9 +131,6 @@ public class ClientSettings {
         return audience;
     }
 
-    public ClientFlowType getFlowType() {
-        return flowType;
-    }
 
     public boolean isAutoProvisioningEnabled() {
         return autoProvisioningEnabled;
@@ -180,9 +173,6 @@ public class ClientSettings {
         this.audience = audience;
     }
 
-    public void setFlowType(ClientFlowType flowType) {
-        this.flowType = flowType;
-    }
 
     public void setAutoProvisioningEnabled(boolean autoProvisioningEnabled) {
         this.autoProvisioningEnabled = autoProvisioningEnabled;

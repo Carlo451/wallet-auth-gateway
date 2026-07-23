@@ -7,5 +7,4 @@ public interface ClientSettingsLookupApi {
 
     ClientSettingsDto lookupClientSettingsWithClientId(String clientId) throws SettingsNotFoundException;
 
-    ClientSettingsDto lookupClientSettingsWithBaseUrl(String baseUrl) throws SettingsNotFoundException;
 }

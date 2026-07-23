@@ -23,7 +23,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WalletPageController {
     private final WalletFlowService walletFlowService;
-    private final WalletCallbackService walletCallbackService;
 
 
     @GetMapping("/wallet/page/{sessionId}")

@@ -9,6 +9,11 @@ spring:
     url: jdbc:postgresql://localhost:5433/auth-gateway
     username: user
     password: password123
+  security:
+    user:
+      name: user
+      password: password
+      roles: ADMIN
 
 gateway:
   app:
@@ -17,15 +22,11 @@ gateway:
   bridge:
     assertion:
       issuer: https://camo-framework.gentoo-fiordland.ts.net:8443
-      gateway.bridge.assertion.registration-assertion-ttl-seconds: 60
+      registration-assertion-ttl-seconds: 60
       login-assertion-ttl-seconds: 30
     signing:
       key-id: gateway-signing-key-1
       type: JWT
-    external:
-      api-calls:
-        register-read-timout-seconds: 5
-        login-read-timeout-seconds: 5
 
 server:
   port: 8443

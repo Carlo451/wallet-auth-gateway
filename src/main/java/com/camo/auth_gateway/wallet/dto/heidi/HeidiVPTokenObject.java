@@ -1,6 +1,12 @@
 package com.camo.auth_gateway.wallet.dto.heidi;
 
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.SignedJWT;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -9,14 +15,17 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.text.ParseException;
 import java.util.*;
 
 public class HeidiVPTokenObject  implements WalletVPTokenObject {
     List<DecodedDisclosure> decodedDisclosureList = new ArrayList<>();
     SignedJWT sdJwt;
     SignedJWT keyBinding;
+    ObjectMapper objectMapper = new ObjectMapper();
 
-    public static HeidiVPTokenObject parseVpToken(String identifier, String vpToken, ObjectMapper objectMapper) throws Exception {
+
+    public static HeidiVPTokenObject parseVpToken(String vpToken, ObjectMapper objectMapper) throws Exception {
         HeidiVPTokenObject object = new HeidiVPTokenObject();
         JsonNode root = objectMapper.readTree(vpToken);
 
@@ -43,7 +52,16 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
         object.setSdJwt(SignedJWT.parse(parts[0]));
         object.setKeyBinding(SignedJWT.parse(keyBindingJwt));
 
+        Object cnf = object.getSdJwt().getJWTClaimsSet().getClaim("cnf");
+        Map<String, Object> cnfMap = objectMapper.convertValue(cnf, new TypeReference<Map<String, Object>>() {});
+        Map<String, String> jwk = objectMapper.convertValue(cnfMap.get("jwk"),new TypeReference<Map<String, String>>() {});
+        ECKey ecKey = new ECKey.Builder(Curve.P_256,
+                new Base64URL(jwk.get("x")),
+                new Base64URL(jwk.get("y")))
+                .build();
 
+        JWSVerifier verifier = new ECDSAVerifier(ecKey);
+        boolean keyBinding = object.getKeyBinding().verify(verifier);
         for (String disclosure : disclosures) {
             String digest = disclosureDigest(disclosure);
 
@@ -70,6 +88,14 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
         }
         return object;
 
+    }
+
+    public boolean verifiyDisclosures() throws ParseException {
+        List<String> sdHashes = (List<String>) getSdJwt().getJWTClaimsSet().getClaim("_sd");
+        for(var decodedDisclosure : decodedDisclosureList) {
+            if (!sdHashes.contains(decodedDisclosure.getDigest())) return false;
+        }
+        return true;
     }
 
     private static List<Object> decodeDisclosure(String encodedDisclosure, ObjectMapper objectMapper) throws Exception {
@@ -140,6 +166,20 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
             }
         }
         throw new IllegalStateException("No decoded claims found for claim name: " + claimName);
+    }
+
+    @Override
+    public boolean verifyKeyBinding() throws ParseException, JOSEException {
+        Object cnf = getSdJwt().getJWTClaimsSet().getClaim("cnf");
+        Map<String, Object> cnfMap = objectMapper.convertValue(cnf, new TypeReference<Map<String, Object>>() {});
+        Map<String, String> jwk = objectMapper.convertValue(cnfMap.get("jwk"),new TypeReference<Map<String, String>>() {});
+        ECKey ecKey = new ECKey.Builder(Curve.P_256,
+                new Base64URL(jwk.get("x")),
+                new Base64URL(jwk.get("y")))
+                .build();
+
+        JWSVerifier verifier = new ECDSAVerifier(ecKey);
+        return getKeyBinding().verify(verifier);
     }
 
 

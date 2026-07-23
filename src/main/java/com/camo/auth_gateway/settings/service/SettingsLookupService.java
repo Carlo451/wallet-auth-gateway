@@ -22,11 +22,5 @@ public class SettingsLookupService implements ClientSettingsLookupApi {
         );
     }
 
-    @Override
-    public ClientSettingsDto lookupClientSettingsWithBaseUrl(String baseUrl) throws SettingsNotFoundException {
-        return ClientSettingsDto.from(
-                clientSettingRepository.findByBaseUrl(baseUrl)
-                        .orElseThrow(() -> new SettingsNotFoundException("No client settings were found with the following client base url: '%s'".formatted(baseUrl)))
-        );
-    }
+
 }
