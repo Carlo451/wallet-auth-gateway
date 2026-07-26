@@ -1,0 +1,38 @@
+services:
+  gateway:
+    container_name: wallet-auth-gateway
+    image: ghcr.io/carlo451/wallet-auth-gateway:latest
+    restart: always
+    environment:
+      ADMIN_USER: user
+      ADMIN_PASSWORD: password
+      BASE_URL: https://base_url.com
+      SERVER_SSL_ENABLED: true
+      SERVER_PORT: 5432
+      SERVER_SSL_KEY_STORE:
+      SERVER_SSL_KEY_STORE_PASSWORD:
+      SERVER_SSL_KEY_STORE_TYPE:
+      SERVER_SSL_KEY_ALIAS:
+      SERVER_FORWARD_HEADERS_STRATEGY:
+
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_URL: url
+    volumes:
+      - ./ssl:/app/ssl:ro
+      - ./certs:/app/certs:ro
+    ports:
+      - "5433:5432"
+  database:
+    container_name: auth-gateway-postgres
+    user: "1000:1000"
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth-gateway
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./gateway-data:/var/lib/postgresql/docker
