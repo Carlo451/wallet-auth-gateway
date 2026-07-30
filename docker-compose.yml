@@ -8,21 +8,17 @@ services:
       ADMIN_PASSWORD: password
       BASE_URL: https://base_url.com
       SERVER_SSL_ENABLED: true
-      SERVER_PORT: 5432
-      SERVER_SSL_KEY_STORE:
-      SERVER_SSL_KEY_STORE_PASSWORD:
-      SERVER_SSL_KEY_STORE_TYPE:
-      SERVER_SSL_KEY_ALIAS:
-      SERVER_FORWARD_HEADERS_STRATEGY:
-
+      SERVER_PORT: 8080
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
       DATABASE_USER: user
       DATABASE_PASSWORD: password
       DATABASE_URL: url
+      WALLET_SIGN_PRIVATE_KEY_PATH: "file:app/certs/private.pem"
     volumes:
       - ./ssl:/app/ssl:ro
       - ./certs:/app/certs:ro
     ports:
-      - "5433:5432"
+      - "8080:8080"
   database:
     container_name: auth-gateway-postgres
     user: "1000:1000"

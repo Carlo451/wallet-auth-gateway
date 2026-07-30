@@ -23,6 +23,10 @@ public class WalletContinueController {
     private final WalletContinueService walletContinueService;
     private final WalletSessionRepository walletSessionRepository;
 
+    /// Handles the redirect logic for a login or a registration
+    /// @param sessionId identification
+    /// @param model
+    /// @return a redirect to the external application login endpoint or to the /wallet/registration-success endpoint
     @GetMapping("/{sessionId}")
     public String successPage(@PathVariable UUID sessionId, Model model) {
         WalletSession session = walletSessionRepository.findById(sessionId).orElseThrow(()-> new RuntimeException("session not found"));

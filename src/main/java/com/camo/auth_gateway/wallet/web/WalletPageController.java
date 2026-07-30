@@ -5,10 +5,8 @@ import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
 import com.camo.auth_gateway.wallet.dto.WalletRegSuccessResponse;
 import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
-import com.camo.auth_gateway.wallet.service.WalletCallbackService;
 import com.camo.auth_gateway.wallet.service.WalletFlowService;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +22,10 @@ import java.util.UUID;
 public class WalletPageController {
     private final WalletFlowService walletFlowService;
 
-
+    /// Provides the wallet page with the qr code for a specific session
+    /// @param sessionId identification of session
+    /// @param model
+    /// @return wallet-page resource
     @GetMapping("/wallet/page/{sessionId}")
     public String walletPage(@PathVariable UUID sessionId, Model model) {
         WalletStatusResponse status = walletFlowService.getStatus(sessionId);
@@ -37,34 +38,50 @@ public class WalletPageController {
         return "wallet-page";
     }
 
+    /// is the redirect starting point to initiate new session for auth
+    /// @param clientId the client identification from client settings
+    /// @param flowType the flow type, login or registration
+    /// @param redirectUri the redirectURI, can be specified also in client settings
+    /// @param redirectAttributes
+    /// @redirect to /wallet/page/{sessionId} or /wallet/error
     @GetMapping("/wallet/page/auth")
     public String walletAuthStartPage(@RequestParam(required = true)  String clientId,
-                                      @RequestParam(required = true) WalletFlowType flowType,
-                                      @RequestParam(required = false)  String purpose,
-                                      @RequestParam(required = false) String redirectUri
-
+                                      @RequestParam(required = true) String flowType,
+                                      @RequestParam(required = false) String redirectUri,
+                                      RedirectAttributes redirectAttributes
                                       ) {
-        if (flowType == WalletFlowType.LOGIN) {
-            StartWalletLoginRequest request = new StartWalletLoginRequest(purpose,redirectUri,clientId,flowType);
-            StartWalletLoginResponse sessionStart = walletFlowService.startLogin(request);
-            return "redirect:/wallet/page/"+sessionStart.sessionId();
-        } else if (flowType == WalletFlowType.REGISTRATION) {
-            StartWalletLoginRequest request = new StartWalletLoginRequest(purpose,redirectUri,clientId,flowType);
-            StartWalletLoginResponse sessionStart = walletFlowService.startLogin(request);
-            return "redirect:/wallet/page/"+sessionStart.sessionId();
+        WalletFlowType flowTypeEnum;
+        try {
+            flowTypeEnum = WalletFlowType.valueOf(flowType);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage","The WAG was not able to read the flowType");
+            return "redirect:/wallet/error";
         }
-        throw new IllegalArgumentException("Invalid flow type");
+        try {
+            StartWalletLoginRequest request = new StartWalletLoginRequest(redirectUri,clientId,flowTypeEnum);
+            StartWalletLoginResponse sessionStart = walletFlowService.startAuth(request);
+            return "redirect:/wallet/page/"+sessionStart.sessionId();
+        } catch(Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage",e.getMessage());
+            return "redirect:/wallet/error";
+        }
     }
 
 
+    /// Provides the status of a auth session
+    /// @param sessionId identifiaction of the session
+    /// @return WalletStatusResponse with basic informations of session
     @GetMapping("/wallet/status/{sessionId}")
     @ResponseBody
     public WalletStatusResponse walletStatus(@PathVariable UUID sessionId) {
         return walletFlowService.getStatus(sessionId);
     }
 
+    /// Provides the error page for a specific session
+    /// @param sessionId path parameter for identification of the session
+    /// @return wallet-error resource
     @GetMapping("/wallet/error/{sessionId}")
-    public String walletError(Model model, @PathVariable UUID sessionId) {
+    public String walletErrorWithSessionId(Model model, @PathVariable UUID sessionId) {
         model.addAttribute("sessionId", sessionId);
         model.addAttribute("stacktrace","Not yet");
         model.addAttribute("errorMessage","Something went wrong");
@@ -72,6 +89,17 @@ public class WalletPageController {
         return "wallet-error";
     }
 
+    /// Provides the error page for a specific session
+    /// @return wallet-error-basic resource
+    @GetMapping("/wallet/error")
+    public String walletError(Model model) {
+        return "wallet-error-basic";
+    }
+
+    /// Provides the resource for the successfull registration
+    /// @param sessionId identification of session
+    /// @param model
+    /// @return registration-success resource
     @GetMapping("/wallet/registration-success/{sessionId}")
     public String registrationSuccess(@PathVariable UUID sessionId, Model model) {
         WalletRegSuccessResponse res = walletFlowService.getSuccessfullRegResponse(sessionId);
@@ -79,10 +107,5 @@ public class WalletPageController {
         model.addAttribute("sessionId", sessionId);
         return "registration-success";
     }
-
-    /*@GetMapping("/wallet/continue/{sessionId}")
-    public String continueAfterWallet(@PathVariable UUID sessionId, Model model) {
-        return "bridge-login-handoff";
-    }*/
 
 }

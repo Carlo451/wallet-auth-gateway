@@ -1,5 +1,7 @@
 package com.camo.auth_gateway.common.config.keys;
 
+import org.springframework.core.io.Resource;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyFactory;
@@ -40,5 +42,13 @@ public class PemKeyLoader {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
         return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+    }
+
+    public static RSAPublicKey loadPublicKey(Resource res) throws Exception {
+        return loadPublicKey(res.getFilePath());
+    }
+
+    public static RSAPrivateKey loadPrivateKey(Resource res) throws Exception {
+        return loadPrivateKey(res.getFilePath());
     }
 }

@@ -25,6 +25,11 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
     ObjectMapper objectMapper = new ObjectMapper();
 
 
+    /// Is used to parse a complete vp token heidi wallet string to create a new vp token object
+    /// @param vpToken the  wallet presentation
+    /// @param objectMapper
+    /// @return HeidiVPTokenObject
+    /// @throws Exception
     public static HeidiVPTokenObject parseVpToken(String vpToken, ObjectMapper objectMapper) throws Exception {
         HeidiVPTokenObject object = new HeidiVPTokenObject();
         JsonNode root = objectMapper.readTree(vpToken);
@@ -63,28 +68,8 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
         JWSVerifier verifier = new ECDSAVerifier(ecKey);
         boolean keyBinding = object.getKeyBinding().verify(verifier);
         for (String disclosure : disclosures) {
-            String digest = disclosureDigest(disclosure);
-
-            List<Object> disclosureJson = decodeDisclosure(disclosure,objectMapper);
-            if (disclosureJson.size() < 3) {
-                throw new IllegalStateException("Unexpected disclosure structure: " + disclosureJson);
-            }
-
-            String salt = String.valueOf(disclosureJson.get(0));
-            String claimName = String.valueOf(disclosureJson.get(1));
-            String claimValue = String.valueOf(disclosureJson.get(2));
-            DecodedDisclosure decodedDisclosure = new DecodedDisclosure();
-
-            decodedDisclosure.setSalt(salt);
-            decodedDisclosure.setClaimName(claimName);
-            decodedDisclosure.setClaimValue(claimValue);
-            decodedDisclosure.setDigest(digest);
-
-
+            var decodedDisclosure = decodeDisclosure(disclosure,objectMapper);
             object.getDecodedDisclosureList().add(decodedDisclosure);
-
-
-
         }
         return object;
 
@@ -93,15 +78,31 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
     public boolean verifiyDisclosures() throws ParseException {
         List<String> sdHashes = (List<String>) getSdJwt().getJWTClaimsSet().getClaim("_sd");
         for(var decodedDisclosure : decodedDisclosureList) {
-            if (!sdHashes.contains(decodedDisclosure.getDigest())) return false;
+            if (!sdHashes.contains(decodedDisclosure.digest())) return false;
         }
         return true;
     }
 
-    private static List<Object> decodeDisclosure(String encodedDisclosure, ObjectMapper objectMapper) throws Exception {
+    /// Decodes disclosure object from Base64Url into the object
+    /// @param encodedDisclosure
+    /// @param objectMapper
+    /// @return
+    /// @throws Exception
+    public static DecodedDisclosure decodeDisclosure(String encodedDisclosure, ObjectMapper objectMapper) throws Exception {
+
         byte[] decoded = Base64.getUrlDecoder().decode(padBase64Url(encodedDisclosure));
         String json = new String(decoded, StandardCharsets.UTF_8);
-        return objectMapper.readValue(json, new TypeReference<List<Object>>() {});
+        var disclosureJson = objectMapper.readValue(json, new TypeReference<List<Object>>() {});
+        if (disclosureJson.size() < 3) {
+            throw new IllegalStateException("Unexpected disclosure structure: " + disclosureJson);
+        }
+
+        String salt = String.valueOf(disclosureJson.get(0));
+        String claimName = String.valueOf(disclosureJson.get(1));
+        String claimValue = String.valueOf(disclosureJson.get(2));
+        String digest = disclosureDigest(encodedDisclosure);
+        return new DecodedDisclosure(salt,claimName,claimValue,digest);
+
 
     }
 

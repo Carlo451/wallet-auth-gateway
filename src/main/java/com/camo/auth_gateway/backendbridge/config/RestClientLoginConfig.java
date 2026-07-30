@@ -1,5 +1,7 @@
 package com.camo.auth_gateway.backendbridge.config;
 
+import jakarta.validation.constraints.Null;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +13,7 @@ import java.time.Duration;
 
 
 @Configuration
+@NullMarked
 public class RestClientLoginConfig {
 
     private final BridgeExternalApiCalls bridgeExternalApiCalls;

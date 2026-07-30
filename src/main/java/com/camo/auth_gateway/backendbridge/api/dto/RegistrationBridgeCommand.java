@@ -7,7 +7,6 @@ public record RegistrationBridgeCommand(
         String clientId,
         String registrationSessionId,
         String pseudonymValue,
-        Map<String, Object> verifiedClaims,
-        String walletSubject
+        Map<String, Object> verifiedClaims
 ) {
 }

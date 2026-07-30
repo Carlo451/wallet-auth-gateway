@@ -52,7 +52,7 @@ public class HeidiWallet implements WalletProvider<HeidiVPTokenObject> {
     @Override
     public JWTClaimsSet buildJWTClaimsSet(WalletFlowType flowType, WalletSession session) throws Exception {
         ECKey keyPair = ECKey.parse(session.getEncEcJwkJson());
-        DcqlQuery dcqlQuery = getDcqlQuery(session.getFlowType(),keyPair);
+        DcqlQuery dcqlQuery = getDcqlQuery(session.getFlowType());
 
 
 
@@ -108,8 +108,10 @@ public class HeidiWallet implements WalletProvider<HeidiVPTokenObject> {
     }
 
 
-
-    public DcqlQuery getDcqlQuery(WalletFlowType flowType, ECKey key) {
+    /// Builds the dcql query object
+    /// @param flowType specifies if login or registration is wanted
+    /// @return
+    public DcqlQuery getDcqlQuery(WalletFlowType flowType) {
         if (WalletFlowType.LOGIN.equals(flowType)) {
             return getDcqlQueryForRegistration();
         } else if (WalletFlowType.REGISTRATION.equals(flowType)) {
@@ -118,7 +120,8 @@ public class HeidiWallet implements WalletProvider<HeidiVPTokenObject> {
         throw new IllegalArgumentException("Unknown flow type: " + flowType);
     }
 
-
+    /// Builds dcql query for registration
+    /// @return
     public DcqlQuery getDcqlQueryForRegistration() {
         DcqlQuery dcqlQuery = new DcqlQuery();
         DcqlClaimQuery givenNameClaim = new DcqlClaimQuery();
@@ -160,6 +163,8 @@ public class HeidiWallet implements WalletProvider<HeidiVPTokenObject> {
         return dcqlQuery;
     }
 
+    /// Build dcql query for login
+    /// @return
     public DcqlQuery getDcqlQueryForLogin() {
         DcqlQuery dcqlQuery = new DcqlQuery();
 

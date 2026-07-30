@@ -5,7 +5,6 @@ import com.camo.auth_gateway.common.config.keys.SigningKeys;
 import com.camo.auth_gateway.identity.api.IdentityCreationApi;
 import com.camo.auth_gateway.settings.api.ClientSettingsLookupApi;
 import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
-import com.camo.auth_gateway.settings.service.SettingsLookupService;
 import com.camo.auth_gateway.wallet.domain.WalletFlowState;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
@@ -47,7 +46,13 @@ public class WalletFlowService {
     private final IdentityCreationApi identityCreationApi;
 
 
-    public StartWalletLoginResponse startLogin(StartWalletLoginRequest request) {
+
+    /// handles the session opening, this includes filling in the information of the request,
+    ///  the saving of the session and
+    /// creating the request URI link for the openId4VP request Object
+    /// @param request StartWalletLoginRequest with the basic informations
+    /// @return StartWalletLoginResponse  containing some informations about the session aswell as the openid4VP request URI
+    public StartWalletLoginResponse startAuth(StartWalletLoginRequest request) {
         Instant expiresAt = Instant.now().plus(5, ChronoUnit.MINUTES);
 
         WalletSession session = WalletSession.createNew(
@@ -57,12 +62,13 @@ public class WalletFlowService {
                 request.clientId()
 
         );
-
+        ClientSettingsDto dto = clientSettingsLookupApi.lookupClientSettingsWithClientId(request.clientId());
+        if (!dto.enabled()) throw new RuntimeException("Client is not enabled");
         session.markPending();
         walletSessionRepository.save(session);
 
         String requestUri = baseUrl+"/api/wallet/request/" + session.getId();
-        String openid4vpUrl = "openid4vp://authorize?request_uri_method=post&request_uri=" + requestUri;
+        String openid4vpUrl = getOpenid4vpUrl(session.getId());
 
         return new StartWalletLoginResponse(
                 session.getId(),
@@ -73,6 +79,10 @@ public class WalletFlowService {
         );
     }
 
+    /// Creating the OPENID4VP Request  Object for the Wallet
+    /// @param sessionId identifiaction of the session
+    /// @return A BASE64-URL String containing the OpenID4VP request object
+    /// @throws Exception is thrown when the signing process does not work
     @Transactional
     public String getRequestObject(UUID sessionId) throws Exception {
         WalletSession session = walletSessionRepository.findById(sessionId)
@@ -80,7 +90,6 @@ public class WalletFlowService {
         ECKey keyPair = keyProv.getECKey();
         session.setEncEcJwkJson(keyPair.toJSONString());
         HeidiWallet wallet = new HeidiWallet(objectMapper,identityCreationApi,baseUrl);
-        //Paradym wallet = new Paradym(objectMapper,baseUrl);
         var claims = wallet.buildJWTClaimsSet(session.getFlowType(),session);
 
 
@@ -103,14 +112,18 @@ public class WalletFlowService {
 
     }
 
+    /// Creates the request object URI for the OpenID4VP request object
+    /// @param sessionId identification of the session
+    /// @return the request object URI
     public String getOpenid4vpUrl(UUID sessionId) {
-        WalletSession session = walletSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
 
-        String requestUri = baseUrl+"/api/wallet/request/" + session.getId();
+        String requestUri = baseUrl+"/api/wallet/request/" + sessionId;
         return "openid4vp://authorize?request_uri_method=get&client_id="+baseUrl+"&request_uri=" + requestUri;
     }
 
+    /// retrieving the most important information of the session and runs the basic invalidation process when called
+    /// @param sessionId identifiaction of session
+    /// @return WalletStatusResponse
     public WalletStatusResponse getStatus(UUID sessionId) {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
@@ -131,6 +144,9 @@ public class WalletFlowService {
         );
     }
 
+    /// Looks up the informations regarding a redirect to the external application, when registration was successfull
+    /// @param sessionId identification of  the session
+    /// @return WalletRegSuccessResponse with external application base URL
     public WalletRegSuccessResponse getSuccessfullRegResponse(UUID sessionId) {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));

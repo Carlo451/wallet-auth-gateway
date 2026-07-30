@@ -52,7 +52,7 @@ public class WalletContinueService {
         }
         Instant expires = Instant.now().plusSeconds(300);
         String sessionId = registrationService.createSession(session.getClientId(), RegistrationSessionStatus.CREATED.toString(), UUID.randomUUID().toString(),expires);
-        RegistrationBridgeCommand command = new RegistrationBridgeCommand(UUID.randomUUID().toString(),session.getClientId(),sessionId,session.getLinkedIdentityId(),claimsForBackend,"HEIDI");
+        RegistrationBridgeCommand command = new RegistrationBridgeCommand(UUID.randomUUID().toString(),session.getClientId(),sessionId,session.getLinkedIdentityId(),claimsForBackend);
         try {
             RegistrationBridgeResult registerResult = registrationBridgeApi.register(command);
             PseudonymMappingDto mapping =  identityLinkingApi.createMapping(session.getClientId(),session.getLinkedIdentityId(), registerResult.externalUserId());

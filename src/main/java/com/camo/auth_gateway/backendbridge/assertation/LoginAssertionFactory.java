@@ -4,6 +4,7 @@ import com.camo.auth_gateway.backendbridge.config.BridgeAssertionProperties;
 import com.camo.auth_gateway.backendbridge.domain.BridgeAssertionEntity;
 import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
 import com.nimbusds.jwt.JWTClaimsSet;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -11,6 +12,7 @@ import java.util.Date;
 
 
 @Component
+@NullMarked
 public class LoginAssertionFactory {
     private final BridgeAssertionProperties properties;
 
@@ -29,7 +31,7 @@ public class LoginAssertionFactory {
                 .claim("flow_type", "login")
                 .claim("linked_account_id", externalUserId);
 
-        if (entity.getSubject() != null && !entity.getSubject().isBlank()) {
+        if (!entity.getSubject().isBlank()) {
             builder.subject(entity.getSubject());
         }
 

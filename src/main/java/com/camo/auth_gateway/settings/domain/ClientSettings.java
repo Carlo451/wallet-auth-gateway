@@ -50,10 +50,6 @@ public class ClientSettings {
     private String audience;
 
 
-    @Column(name = "auto_provisioning_enabled", nullable = false)
-    private boolean autoProvisioningEnabled = false;
-
-
     @OneToMany(mappedBy = "settings", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AskedClaimForRegister> askedClaimsForRegister = new ArrayList<>();
 
@@ -70,8 +66,6 @@ public class ClientSettings {
                           String successRedirectUri,
                           String errorRedirectUri,
                           String audience,
-                          ClientFlowType flowType,
-                          boolean autoProvisioningEnabled,
                           List<String> requestedClaims) {
         this.clientId = clientId;
         this.name = name;
@@ -83,7 +77,6 @@ public class ClientSettings {
         this.successRedirectUri = successRedirectUri;
         this.errorRedirectUri = errorRedirectUri;
         this.audience = audience;
-        this.autoProvisioningEnabled = autoProvisioningEnabled;
 
     }
 
@@ -132,9 +125,6 @@ public class ClientSettings {
     }
 
 
-    public boolean isAutoProvisioningEnabled() {
-        return autoProvisioningEnabled;
-    }
 
 
     public void setName(String name) {
@@ -173,10 +163,6 @@ public class ClientSettings {
         this.audience = audience;
     }
 
-
-    public void setAutoProvisioningEnabled(boolean autoProvisioningEnabled) {
-        this.autoProvisioningEnabled = autoProvisioningEnabled;
-    }
 
     public void setClientId(String clientId) {
         this.clientId = clientId;

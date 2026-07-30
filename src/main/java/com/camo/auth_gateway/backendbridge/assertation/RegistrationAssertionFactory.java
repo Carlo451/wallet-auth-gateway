@@ -5,6 +5,7 @@ import com.camo.auth_gateway.backendbridge.config.BridgeAssertionProperties;
 import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
 import com.camo.auth_gateway.settings.domain.ClientSettings;
 import com.nimbusds.jwt.JWTClaimsSet;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Component
+@NullMarked
 public class RegistrationAssertionFactory {
 
     private final Clock clock;
@@ -42,10 +44,6 @@ public class RegistrationAssertionFactory {
                 .claim("registration_session_id", command.registrationSessionId())
                 .claim("pseudonym_value", command.pseudonymValue())
                 .claim("verified_claims", verifiedClaims);
-
-        if (command.walletSubject() != null && !command.walletSubject().isBlank()) {
-            builder.claim("wallet_subject", command.walletSubject());
-        }
 
         return builder.build();
     }

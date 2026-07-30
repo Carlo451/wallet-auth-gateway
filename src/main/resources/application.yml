@@ -29,6 +29,7 @@ gateway:
     signing:
       key-id: gateway-signing-key-1
       type: JWT
+      wallet-sign-priv-key: ${WALLET_SIGN_PRIVATE_KEY_PATH:}
 
 server:
   port: ${SERVER_PORT:8443}

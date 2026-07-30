@@ -34,14 +34,6 @@ public class AssertionConsumptionService implements LoginAssertionConsumptionApi
             );
         }
         BridgeAssertionEntity  assertion = assertionOpt.get();
-        /*if (assertion.getAssertionType() != BridgeAssertionType.LOGIN) {
-            return new ConsumeLoginAssertionResult(
-                    jti,
-                    false,
-                    ConsumeLoginAssertionReason.ASSERTION_TYPE_MISMATCH,
-                    null
-            );
-        }*/
         if (!assertion.getClientId().equals(clientId)) {
             return new ConsumeLoginAssertionResult(
                     jti,

@@ -7,11 +7,13 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
 
 import java.security.interfaces.RSAPrivateKey;
 
 @Component
+@NullMarked
 public class AssertionSigner {
 
     private final RSAPrivateKey privateKey;
