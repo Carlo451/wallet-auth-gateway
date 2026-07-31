@@ -5,6 +5,7 @@ import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
 import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
 import com.camo.auth_gateway.wallet.service.WalletCallbackService;
 import com.camo.auth_gateway.wallet.service.WalletFlowService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
@@ -13,18 +14,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/wallet")
+@RequestMapping("${gateway.api.controller-path}")
 @RequiredArgsConstructor
-public class WalletLoginController {
+public class WalletAuthController {
     private final WalletFlowService walletFlowService;
     private final WalletCallbackService walletCallbackService;
 
-    @PostMapping("/login/start")
-    public StartWalletLoginResponse startLogin(@RequestBody StartWalletLoginRequest request) {
+    @PostMapping("/auth/start")
+    public StartWalletLoginResponse startLogin(@RequestBody @Valid StartWalletLoginRequest request) {
         return walletFlowService.startAuth(request);
     }
 
-    @GetMapping("/request/{sessionId}")
+    @GetMapping("${gateway.api.openId4vp.request-object-path}/{sessionId}")
     public String getRequestObject(@PathVariable UUID sessionId) throws Exception {
         return walletFlowService.getRequestObject(sessionId);
     }
@@ -35,7 +36,7 @@ public class WalletLoginController {
     }
 
     @PostMapping(
-            value = "/callback",
+            value = "${gateway.api.openId4vp.callback-path}",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public void callback(@RequestParam MultiValueMap<String, String> formData) throws Exception {

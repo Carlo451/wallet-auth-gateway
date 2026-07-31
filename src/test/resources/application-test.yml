@@ -5,12 +5,9 @@ spring:
     name: wallet-auth-gateway
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: false
-  datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USER}
-    password: ${DATABASE_PASSWORD}
+
   security:
     user:
       name: ${ADMIN_USER:user}
@@ -19,10 +16,10 @@ spring:
 
 gateway:
   api:
-    controller-path: /wallet/api
+    controller-path: /test/wallet/api
     openId4vp:
-      request-object-path: /openid4vp/request
-      callback-path: openid4vp/callback
+      request-object-path: /test/openid4vp/request
+      callback-path: /test/openid4vp/callback
   app:
     network:
       baseurl: https://camo-framework.gentoo-fiordland.ts.net:8443

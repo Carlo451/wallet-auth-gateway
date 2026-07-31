@@ -104,7 +104,7 @@ public class HeidiWallet implements WalletProvider<HeidiVPTokenObject> {
         DecodedDisclosure famNameDisc = tokenObject.findDisclosureObjectForClaimName("family_name");
         DecodedDisclosure birthPlaceDisc = tokenObject.findDisclosureObjectForClaimName("birth_place");
         DecodedDisclosure birthDateDisc = tokenObject.findDisclosureObjectForClaimName("birth_date");
-        return identityCreationApi.buildIdentityLink(givenNameDisc.getClaimValue(),famNameDisc.getClaimValue(),birthPlaceDisc.getClaimValue(), birthDateDisc.getClaimValue());
+        return identityCreationApi.buildIdentityLink(givenNameDisc.claimValue(),famNameDisc.claimValue(),birthPlaceDisc.claimValue(), birthDateDisc.claimValue());
     }
 
 

@@ -5,6 +5,7 @@ import com.camo.auth_gateway.common.config.keys.SigningKeys;
 import com.camo.auth_gateway.identity.api.IdentityCreationApi;
 import com.camo.auth_gateway.settings.api.ClientSettingsLookupApi;
 import com.camo.auth_gateway.settings.api.dto.ClientSettingsDto;
+import com.camo.auth_gateway.settings.api.exceptions.SettingsNotFoundException;
 import com.camo.auth_gateway.wallet.domain.WalletFlowState;
 import com.camo.auth_gateway.wallet.domain.WalletSession;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
@@ -20,7 +21,11 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +38,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@NullMarked
 public class WalletFlowService {
 
     @Value("${gateway.app.network.baseurl}")
@@ -124,13 +130,11 @@ public class WalletFlowService {
     /// retrieving the most important information of the session and runs the basic invalidation process when called
     /// @param sessionId identifiaction of session
     /// @return WalletStatusResponse
-    public WalletStatusResponse getStatus(UUID sessionId) {
+    public WalletStatusResponse getStatus(UUID sessionId) throws IllegalArgumentException {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
-
         boolean expired = session.isExpired();
         WalletFlowState state = session.getFlowState();
-
         if (expired && state != WalletFlowState.VERIFIED) {
             state = WalletFlowState.EXPIRED;
         }
@@ -147,17 +151,11 @@ public class WalletFlowService {
     /// Looks up the informations regarding a redirect to the external application, when registration was successfull
     /// @param sessionId identification of  the session
     /// @return WalletRegSuccessResponse with external application base URL
-    public WalletRegSuccessResponse getSuccessfullRegResponse(UUID sessionId) {
+    public WalletRegSuccessResponse getSuccessfullRegResponse(UUID sessionId) throws IllegalArgumentException,SettingsNotFoundException {
         WalletSession session = walletSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Wallet session not found"));
         ClientSettingsDto dto = clientSettingsLookupApi.lookupClientSettingsWithClientId(session.getClientId());
+        return new WalletRegSuccessResponse(dto.baseUrl());
 
-
-        return new WalletRegSuccessResponse(
-                dto.baseUrl()
-        );
     }
-
-
-
 }

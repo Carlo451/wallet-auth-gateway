@@ -5,7 +5,6 @@ import java.util.Map;
 public record RegistrationBridgeCommand(
         String jti,
         String clientId,
-        String registrationSessionId,
         String pseudonymValue,
         Map<String, Object> verifiedClaims
 ) {

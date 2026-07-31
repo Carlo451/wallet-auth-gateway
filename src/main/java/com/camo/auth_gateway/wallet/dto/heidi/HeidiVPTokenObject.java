@@ -75,6 +75,21 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
 
     }
 
+    @Override
+    public boolean verifyKeyBinding() throws ParseException, JOSEException {
+        Object cnf = getSdJwt().getJWTClaimsSet().getClaim("cnf");
+        Map<String, Object> cnfMap = objectMapper.convertValue(cnf, new TypeReference<Map<String, Object>>() {});
+        Map<String, String> jwk = objectMapper.convertValue(cnfMap.get("jwk"),new TypeReference<Map<String, String>>() {});
+        ECKey ecKey = new ECKey.Builder(Curve.P_256,
+                new Base64URL(jwk.get("x")),
+                new Base64URL(jwk.get("y")))
+                .build();
+
+        JWSVerifier verifier = new ECDSAVerifier(ecKey);
+        return getKeyBinding().verify(verifier);
+    }
+
+
     public boolean verifiyDisclosures() throws ParseException {
         List<String> sdHashes = (List<String>) getSdJwt().getJWTClaimsSet().getClaim("_sd");
         for(var decodedDisclosure : decodedDisclosureList) {
@@ -162,26 +177,13 @@ public class HeidiVPTokenObject  implements WalletVPTokenObject {
     @Override
     public DecodedDisclosure findDisclosureObjectForClaimName(String claimName) {
         for(DecodedDisclosure decodedDisclosure : decodedDisclosureList) {
-            if(decodedDisclosure.getClaimName().toLowerCase().equals(claimName.toLowerCase())) {
+            if(decodedDisclosure.claimName().toLowerCase().equals(claimName.toLowerCase())) {
                 return decodedDisclosure;
             }
         }
         throw new IllegalStateException("No decoded claims found for claim name: " + claimName);
     }
 
-    @Override
-    public boolean verifyKeyBinding() throws ParseException, JOSEException {
-        Object cnf = getSdJwt().getJWTClaimsSet().getClaim("cnf");
-        Map<String, Object> cnfMap = objectMapper.convertValue(cnf, new TypeReference<Map<String, Object>>() {});
-        Map<String, String> jwk = objectMapper.convertValue(cnfMap.get("jwk"),new TypeReference<Map<String, String>>() {});
-        ECKey ecKey = new ECKey.Builder(Curve.P_256,
-                new Base64URL(jwk.get("x")),
-                new Base64URL(jwk.get("y")))
-                .build();
-
-        JWSVerifier verifier = new ECDSAVerifier(ecKey);
-        return getKeyBinding().verify(verifier);
-    }
 
 
 }

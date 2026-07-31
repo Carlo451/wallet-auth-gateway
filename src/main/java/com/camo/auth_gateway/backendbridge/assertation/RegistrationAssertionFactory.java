@@ -41,7 +41,6 @@ public class RegistrationAssertionFactory {
                 .jwtID(command.jti())
                 .claim("client_id", clientSettings.clientId())
                 .claim("flow_type", "registration")
-                .claim("registration_session_id", command.registrationSessionId())
                 .claim("pseudonym_value", command.pseudonymValue())
                 .claim("verified_claims", verifiedClaims);
 

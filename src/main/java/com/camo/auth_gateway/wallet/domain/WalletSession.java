@@ -2,6 +2,7 @@ package com.camo.auth_gateway.wallet.domain;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.jspecify.annotations.NullMarked;
 
 import java.time.Instant;
 import java.util.UUID;

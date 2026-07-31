@@ -100,10 +100,10 @@ public class WalletCallbackService {
         VerifiedClaims verifiedClaims = new VerifiedClaims();
         for (DecodedDisclosure disclosure: heidiObj.getDecodedDisclosureList()) {
             VerifiedDisclosure disc = new VerifiedDisclosure();
-            disc.setClaimName(disclosure.getClaimName());
-            disc.setClaimValue(disclosure.getClaimValue());
-            disc.setDigest(disclosure.getDigest());
-            disc.setSalt(disclosure.getSalt());
+            disc.setClaimName(disclosure.claimName());
+            disc.setClaimValue(disclosure.claimValue());
+            disc.setDigest(disclosure.digest());
+            disc.setSalt(disclosure.salt());
             verifiedClaims.getClaims().add(disc);
         }
         if (session.getFlowType().equals(WalletFlowType.LOGIN) ) {

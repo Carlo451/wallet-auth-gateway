@@ -1,11 +1,13 @@
 package com.camo.auth_gateway.wallet.web;
 
+import com.camo.auth_gateway.settings.api.exceptions.SettingsNotFoundException;
 import com.camo.auth_gateway.wallet.domain.WalletFlowType;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginRequest;
 import com.camo.auth_gateway.wallet.dto.StartWalletLoginResponse;
 import com.camo.auth_gateway.wallet.dto.WalletRegSuccessResponse;
 import com.camo.auth_gateway.wallet.dto.WalletStatusResponse;
 import com.camo.auth_gateway.wallet.service.WalletFlowService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -73,7 +75,8 @@ public class WalletPageController {
     /// @return WalletStatusResponse with basic informations of session
     @GetMapping("/wallet/status/{sessionId}")
     @ResponseBody
-    public WalletStatusResponse walletStatus(@PathVariable UUID sessionId) {
+    public WalletStatusResponse walletStatus(@PathVariable UUID sessionId, HttpServletRequest request) {
+        request.setAttribute("sessionId",sessionId);
         return walletFlowService.getStatus(sessionId);
     }
 
@@ -101,7 +104,10 @@ public class WalletPageController {
     /// @param model
     /// @return registration-success resource
     @GetMapping("/wallet/registration-success/{sessionId}")
-    public String registrationSuccess(@PathVariable UUID sessionId, Model model) {
+    public String registrationSuccess(@PathVariable UUID sessionId, Model model,HttpServletRequest request) throws IllegalArgumentException, SettingsNotFoundException {
+        //if an error is thrown, the session id is in the request and can be handled inside the exception handler
+        request.setAttribute("sessionId",sessionId);
+
         WalletRegSuccessResponse res = walletFlowService.getSuccessfullRegResponse(sessionId);
         model.addAttribute("redirectUrl", res.redirectUrl());
         model.addAttribute("sessionId", sessionId);
